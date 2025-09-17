@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - PawfectCare</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/pages/dashboard.css">
+    
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container">
+            <a href="index.html" class="logo">Pawfect<span>Care</span></a>
+            <div class="nav-links">
+                <a href="index.html">Home</a>
+                <a href="services.html">Services</a>
+                <a href="booking.html">Book Now</a>
+                <a href="about.html">About Us</a>
+                <a href="contact.html">Contact</a>
+                <div class="auth-buttons">
+                    <a href="profile.html" class="btn btn-outline">
+                        <i class="fas fa-user"></i> My Profile
+                    </a>
+                    <a href="login.html" class="btn btn-outline">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </a>
+                </div>
+            </div>
+            <button class="hamburger">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Dashboard -->
+    <section class="dashboard">
+        <div class="container">
+            <div class="dashboard-header">
+                <h1 class="welcome-message">Welcome back, Sarah!</h1>
+                <div class="dashboard-date" id="currentDate">Tuesday, October 10, 2023</div>
+            </div>
+            
+            <div class="dashboard-grid">
+                <!-- Sidebar -->
+                <aside class="sidebar">
+                    <ul class="sidebar-menu">
+                        <li>
+                            <a href="#" class="active">
+                                <i class="fas fa-home"></i> Dashboard
+                            </a>
+                        </li>
+                        <li>
+                            <a href="appointments.html">
+                                <i class="fas fa-calendar-alt"></i> Appointments
+                            </a>
+                        </li>
+                        <li>
+                            <a href="pets.html">
+                                <i class="fas fa-paw"></i> My Pets
+                            </a>
+                        </li>
+                        <li>
+                            <a href="messages.html">
+                                <i class="fas fa-envelope"></i> Messages
+                                <span class="badge" style="margin-left: auto; background: #e74c3c; color: white; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 0.7rem;">3</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="payment.html">
+                                <i class="fas fa-credit-card"></i> Payment Methods
+                            </a>
+                        </li>
+                        <li>
+                            <a href="settings.html">
+                                <i class="fas fa-cog"></i> Settings
+                            </a>
+                        </li>
+                        <li>
+                            <a href="help.html">
+                                <i class="fas fa-question-circle"></i> Help & Support
+                            </a>
+                        </li>
+                    </ul>
+                </aside>
+                
+                <!-- Main Content -->
+                <main class="main-content">
+                    <!-- Upcoming Appointments -->
+                    <div class="card appointments">
+                        <div class="card-header">
+                            <h2 class="card-title">Upcoming Appointments</h2>
+                            <a href="booking.html" class="btn btn-primary">
+                                <i class="fas fa-plus"></i> New Booking
+                            </a>
+                        </div>
+                        
+                        <div class="appointment-list">
+                            <div class="appointment-item">
+                                <div class="appointment-info">
+                                    <h4>Full Grooming Session</h4>
+                                    <div class="appointment-meta">
+                                        <span><i class="far fa-calendar"></i> Oct 15, 2023</span>
+                                        <span><i class="far fa-clock"></i> 10:00 AM - 12:00 PM</span>
+                                        <span><i class="fas fa-paw"></i> Max (Golden Retriever)</span>
+                                    </div>
+                                </div>
+                                <div class="appointment-actions">
+                                    <span class="status-badge status-confirmed">Confirmed</span>
+                                </div>
+                            </div>
+                            
+                            <div class="appointment-item">
+                                <div class="appointment-info">
+                                    <h4>Veterinary Checkup</h4>
+                                    <div class="appointment-meta">
+                                        <span><i class="far fa-calendar"></i> Oct 18, 2023</span>
+                                        <span><i class="far fa-clock"></i> 2:30 PM - 3:30 PM</span>
+                                        <span><i class="fas fa-paw"></i> Luna (Siamese Cat)</span>
+                                    </div>
+                                </div>
+                                <div class="appointment-actions">
+                                    <span class="status-badge status-pending">Pending</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div style="text-align: right; margin-top: 1rem;">
+                            <a href="appointments.html" class="btn btn-outline btn-sm">View All Appointments</a>
+                        </div>
+                    </div>
+                    
+                    <!-- My Pets -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">My Pets</h2>
+                            <button class="btn btn-primary" id="addPetBtn">
+                                <i class="fas fa-plus"></i> Add Pet
+                            </button>
+                        </div>
+                        
+                        <div class="pets-grid">
+                            <!-- Pet Card 1 -->
+                            <div class="pet-card">
+                                <div class="pet-image">
+                                    <img src="https://images.unsplash.com/photo-1548199973-03cce0bbc87b?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80" alt="Max">
+                                </div>
+                                <div class="pet-details">
+                                    <h3 class="pet-name">Max</h3>
+                                    <div class="pet-breed">Golden Retriever • 3 years</div>
+                                    <div class="pet-actions">
+                                        <button class="btn btn-outline btn-sm">
+                                            <i class="far fa-edit"></i> Edit
+                                        </button>
+                                        <button class="btn btn-outline btn-sm">
+                                            <i class="far fa-calendar-alt"></i> Book
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Pet Card 2 -->
+                            <div class="pet-card">
+                                <div class="pet-image">
+                                    <img src="https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80" alt="Luna">
+                                </div>
+                                <div class="pet-details">
+                                    <h3 class="pet-name">Luna</h3>
+                                    <div class="pet-breed">Siamese Cat • 2 years</div>
+                                    <div class="pet-actions">
+                                        <button class="btn btn-outline btn-sm">
+                                            <i class="far fa-edit"></i> Edit
+                                        </button>
+                                        <button class="btn btn-outline btn-sm">
+                                            <i class="far fa-calendar-alt"></i> Book
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Add New Pet Card -->
+                            <div class="pet-card add-pet-card" id="addNewPetCard">
+                                <i class="fas fa-plus"></i>
+                                <span>Add New Pet</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Recent Activity -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">Recent Activity</h2>
+                        </div>
+                        
+                        <div class="recent-activity">
+                            <div class="activity-item">
+                                <div class="activity-icon">
+                                    <i class="fas fa-calendar-check"></i>
+                                </div>
+                                <div class="activity-details">
+                                    <p class="activity-message">Your grooming appointment with Max has been confirmed for October 15, 2023</p>
+                                    <div class="activity-time">2 hours ago</div>
+                                </div>
+                            </div>
+                            
+                            <div class="activity-item">
+                                <div class="activity-icon" style="background: rgba(52, 152, 219, 0.1); color: #3498db;">
+                                    <i class="fas fa-comment-dots"></i>
+                                </div>
+                                <div class="activity-details">
+                                    <p class="activity-message">New message from Dr. Smith regarding Luna's upcoming checkup</p>
+                                    <div class="activity-time">1 day ago</div>
+                                </div>
+                            </div>
+                            
+                            <div class="activity-item">
+                                <div class="activity-icon" style="background: rgba(46, 204, 113, 0.1); color: #2ecc71;">
+                                    <i class="fas fa-check-circle"></i>
+                                </div>
+                                <div class="activity-details">
+                                    <p class="activity-message">Payment of $65.00 for Max's grooming session has been processed</p>
+                                    <div class="activity-time">3 days ago</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div style="text-align: right; margin-top: 1rem;">
+                            <a href="activity.html" class="btn btn-outline btn-sm">View All Activity</a>
+                        </div>
+                    </div>
+                </main>
+            </div>
+        </div>
+    </section>
+
+    <script src="js/main.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set current date
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            const today = new Date();
+            document.getElementById('currentDate').textContent = today.toLocaleDateString('en-US', options);
+            
+            // Add pet button click handlers
+            document.getElementById('addPetBtn').addEventListener('click', function() {
+                window.location.href = 'add-pet.html';
+            });
+            
+            document.getElementById('addNewPetCard').addEventListener('click', function() {
+                window.location.href = 'add-pet.html';
+            });
+            
+            // Mobile menu toggle
+            const hamburger = document.querySelector('.hamburger');
+            const navLinks = document.querySelector('.nav-links');
+            
+            hamburger.addEventListener('click', function() {
+                this.classList.toggle('active');
+                navLinks.classList.toggle('active');
+            });
+        });
+    </script>
+</body>
+</html>

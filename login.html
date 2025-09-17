@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - PawfectCare</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/pages/login.css">
+    
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container">
+            <a href="index.html" class="logo">Pawfect<span>Care</span></a>
+            <div class="nav-links">
+                <a href="index.html">Home</a>
+                <a href="services.html">Services</a>
+                <a href="booking.html">Book Now</a>
+                <a href="about.html">About Us</a>
+                <a href="contact.html">Contact</a>
+                <div class="auth-buttons">
+                    <a href="login.html" class="btn btn-outline active">Login</a>
+                    <a href="register.html" class="btn btn-primary">Sign Up</a>
+                </div>
+            </div>
+            <button class="hamburger">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Auth Container -->
+    <div class="auth-container">
+        <div class="auth-image"></div>
+        <div class="auth-form-container">
+            <div class="auth-form">
+                <h1>Welcome Back!</h1>
+                
+                <button class="btn btn-google">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" alt="Google" style="width: 20px;">
+                    Continue with Google
+                </button>
+                
+                <div class="divider">
+                    <span>or sign in with email</span>
+                </div>
+                
+                <form id="loginForm">
+                    <div id="errorContainer" class="error-message" style="display: none; margin-bottom: 1.5rem;"></div>
+                    
+                    <div class="form-group">
+                        <label for="email">Email Address</label>
+                        <input type="email" id="email" name="email" class="form-control" placeholder="your.email@example.com" required>
+                        <div class="error-message"></div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <label for="password">Password</label>
+                            <a href="forgot-password.html" class="forgot-password">Forgot password?</a>
+                        </div>
+                        <input type="password" id="password" name="password" class="form-control" placeholder="••••••••" required>
+                        <div class="error-message"></div>
+                    </div>
+                    
+                    <div class="form-group" style="display: flex; align-items: center;">
+                        <input type="checkbox" id="remember" name="remember" style="margin-right: 10px; width: auto;">
+                        <label for="remember" style="margin-bottom: 0; font-weight: normal;">Remember me</label>
+                    </div>
+                    
+                    <button type="submit" id="loginBtn" class="btn btn-primary">
+                        <span class="btn-text">Sign In</span>
+                        <span class="btn-loading" style="display: none;">
+                            <i class="fas fa-spinner fa-spin"></i> Signing in...
+                        </span>
+                    </button>
+                </form>
+                
+                <div class="auth-footer">
+                    Don't have an account? <a href="register.html">Sign up</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Load Font Awesome for loading spinner -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Main JavaScript -->
+    <script src="js/main.js" type="module"></script>
+    <script src="js/login.js" type="module"></script>
+</body>
+</html>

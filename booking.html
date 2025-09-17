@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Appointment - PawfectCare</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .booking-hero {
+            background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), 
+                        url('https://images.unsplash.com/photo-1516734212186-967cc9369e8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80') 
+                        no-repeat center center/cover;
+            color: white;
+            text-align: center;
+            padding: 120px 0 80px;
+            margin-top: 80px;
+        }
+        
+        .booking-container {
+            display: grid;
+            grid-template-columns: 1fr 1.2fr;
+            gap: 3rem;
+            padding: 80px 0;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .booking-form, .ai-pet-recognition {
+            background: white;
+            border-radius: 15px;
+            padding: 2.5rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-family: 'Poppins', sans-serif;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 0.8rem 1.8rem;
+            border-radius: 50px;
+            font-weight: 500;
+            cursor: pointer;
+            text-align: center;
+        }
+        
+        .btn-primary {
+            background: #2ec4b6;
+            color: white;
+            border: none;
+        }
+        
+        .ai-box {
+            border: 2px dashed #ddd;
+            border-radius: 10px;
+            padding: 2rem;
+            text-align: center;
+            margin: 1.5rem 0;
+            cursor: pointer;
+        }
+        
+        @media (max-width: 992px) {
+            .booking-container {
+                grid-template-columns: 1fr;
+                padding: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container">
+            <a href="index.html" class="logo">Pawfect<span>Care</span></a>
+            <div class="nav-links">
+                <a href="index.html">Home</a>
+                <a href="services.html">Services</a>
+                <a href="booking.html" class="active">Book Now</a>
+                <a href="about.html">About Us</a>
+                <a href="contact.html">Contact</a>
+                <div class="auth-buttons">
+                    <a href="login.html" class="btn btn-outline">Login</a>
+                    <a href="register.html" class="btn btn-primary">Sign Up</a>
+                </div>
+            </div>
+            <button class="hamburger">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Booking Hero -->
+    <section class="booking-hero">
+        <div class="container">
+            <h1>Book an Appointment</h1>
+            <p>Schedule a visit for your pet with our professional care services.</p>
+        </div>
+    </section>
+
+    <!-- Booking Container -->
+    <div class="container">
+        <div class="booking-container">
+            <!-- Booking Form -->
+            <div class="booking-form">
+                <h2>Appointment Details</h2>
+                <form id="bookingForm">
+                    <div class="form-group">
+                        <label for="service">Service Type</label>
+                        <select id="service" class="form-control" required>
+                            <option value="">Select a service</option>
+                            <option value="grooming">Grooming</option>
+                            <option value="daycare">Daycare</option>
+                            <option value="boarding">Boarding</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="date">Date</label>
+                        <input type="date" id="date" class="form-control" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="time">Time Slot</label>
+                        <select id="time" class="form-control" required>
+                            <option value="">Select a time</option>
+                            <option value="09:00">09:00 AM</option>
+                            <option value="11:00">11:00 AM</option>
+                            <option value="14:00">02:00 PM</option>
+                            <option value="16:00">04:00 PM</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="pet">Select Pet</label>
+                        <select id="pet" class="form-control" required>
+                            <option value="">Select your pet</option>
+                            <option value="max">Max (Golden Retriever)</option>
+                            <option value="bella">Bella (Persian Cat)</option>
+                            <option value="addNew">+ Add New Pet</option>
+                        </select>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">
+                        Book Appointment
+                    </button>
+                </form>
+            </div>
+            
+            <!-- AI Pet Recognition -->
+            <div class="ai-pet-recognition">
+                <h2>AI Pet Recognition</h2>
+                <p>Upload a photo of your pet to help us provide the best possible care.</p>
+                
+                <div id="aiUploadBox" class="ai-box">
+                    <i class="fas fa-camera" style="font-size: 2.5rem; color: #2ec4b6; margin-bottom: 1rem;"></i>
+                    <h3>Upload Pet Photo</h3>
+                    <p>Click or drag & drop an image of your pet</p>
+                    <input type="file" id="petImage" accept="image/*" style="display: none;">
+                </div>
+                
+                <div class="benefits">
+                    <h4>How AI Helps:</h4>
+                    <ul style="list-style: none; padding: 0;">
+                        <li style="margin: 0.8rem 0; display: flex; align-items: flex-start;">
+                            <i class="fas fa-check-circle" style="color: #2ec4b6; margin-right: 10px; margin-top: 3px;"></i>
+                            <span>Identifies breed-specific needs</span>
+                        </li>
+                        <li style="margin: 0.8rem 0; display: flex; align-items: flex-start;">
+                            <i class="fas fa-check-circle" style="color: #2ec4b6; margin-right: 10px; margin-top: 3px;"></i>
+                            <span>Personalizes care recommendations</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-about">
+                    <h3>PawfectCare</h3>
+                    <p>Professional pet care services with AI-powered recognition.</p>
+                </div>
+                <div class="footer-links">
+                    <h4>Quick Links</h4>
+                    <ul>
+                        <li><a href="index.html">Home</a></li>
+                        <li><a href="services.html">Services</a></li>
+                        <li><a href="booking.html">Book Now</a></li>
+                    </ul>
+                </div>
+                <div class="footer-contact">
+                    <h4>Contact Us</h4>
+                    <ul>
+                        <li><i class="fas fa-phone"></i> (123) 456-7890</li>
+                        <li><i class="fas fa-envelope"></i> info@pawfectcare.com</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2023 PawfectCare. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/main.js"></script>
+    <script>
+        // Set minimum date to today
+        document.addEventListener('DOMContentLoaded', function() {
+            const today = new Date();
+            const dd = String(today.getDate()).padStart(2, '0');
+            const mm = String(today.getMonth() + 1).padStart(2, '0');
+            const yyyy = today.getFullYear();
+            document.getElementById('date').min = `${yyyy}-${mm}-${dd}`;
+            
+            // Handle file upload
+            const uploadBox = document.getElementById('aiUploadBox');
+            const petImage = document.getElementById('petImage');
+            
+            uploadBox.addEventListener('click', function() {
+                petImage.click();
+            });
+            
+            petImage.addEventListener('change', function(e) {
+                if (e.target.files.length > 0) {
+                    // In a real app, you would process the image here
+                    alert('Pet image uploaded successfully!');
+                }
+            });
+            
+            // Handle form submission
+            document.getElementById('bookingForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                alert('Appointment booked successfully!');
+                // In a real app, you would submit the form data to a server here
+            });
+        });
+    </script>
+</body>
+</html>

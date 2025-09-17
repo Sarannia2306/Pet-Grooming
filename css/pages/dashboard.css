@@ -1,0 +1,364 @@
+/* Dashboard Page Styles */
+.dashboard {
+    padding: 100px 0 50px;
+    background-color: #f8f9fa;
+    min-height: 100vh;
+}
+
+.dashboard-header {
+    margin-bottom: 2rem;
+}
+
+.welcome-message {
+    font-size: 1.8rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: #2c3e50;
+}
+
+.dashboard-date {
+    color: #7f8c8d;
+    font-size: 0.95rem;
+}
+
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: 250px 1fr;
+    gap: 2rem;
+}
+
+.sidebar {
+    background: white;
+    border-radius: 15px;
+    padding: 1.5rem;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+    height: fit-content;
+}
+
+.sidebar-menu {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.sidebar-menu li {
+    margin-bottom: 0.5rem;
+}
+
+.sidebar-menu a {
+    display: flex;
+    align-items: center;
+    padding: 0.7rem 1rem;
+    color: #2c3e50;
+    text-decoration: none;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.sidebar-menu a:hover, 
+.sidebar-menu a.active {
+    background-color: rgba(46, 196, 182, 0.1);
+    color: #2ec4b6;
+}
+
+.sidebar-menu i {
+    margin-right: 10px;
+    width: 20px;
+    text-align: center;
+}
+
+.main-content {
+    display: grid;
+    gap: 1.5rem;
+}
+
+.card {
+    background: white;
+    border-radius: 15px;
+    padding: 1.5rem;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #eee;
+}
+
+.card-title {
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin: 0;
+    color: #2c3e50;
+}
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-weight: 500;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+}
+
+.btn-primary {
+    background: #2ec4b6;
+    color: white;
+    border: none;
+}
+
+.btn-outline {
+    background: transparent;
+    border: 1px solid #2ec4b6;
+    color: #2ec4b6;
+}
+
+.btn i {
+    margin-right: 5px;
+}
+
+.appointments {
+    margin-bottom: 1.5rem;
+}
+
+.appointment-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 0;
+    border-bottom: 1px solid #eee;
+}
+
+.appointment-item:last-child {
+    border-bottom: none;
+}
+
+.appointment-info h4 {
+    margin: 0 0 0.3rem;
+    font-size: 1rem;
+}
+
+.appointment-meta {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.85rem;
+    color: #7f8c8d;
+}
+
+.appointment-meta span {
+    display: flex;
+    align-items: center;
+}
+
+.appointment-meta i {
+    margin-right: 5px;
+    color: #2ec4b6;
+}
+
+.status-badge {
+    padding: 0.3rem 0.8rem;
+    border-radius: 50px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.status-confirmed {
+    background: #d4edda;
+    color: #155724;
+}
+
+.status-pending {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.pets-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1rem;
+}
+
+.pet-card {
+    border: 1px solid #eee;
+    border-radius: 12px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.pet-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+}
+
+.pet-image {
+    height: 150px;
+    background: #f8f9fa;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.pet-image img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: cover;
+}
+
+.pet-details {
+    padding: 1rem;
+}
+
+.pet-name {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0 0 0.3rem;
+    color: #2c3e50;
+}
+
+.pet-breed {
+    font-size: 0.85rem;
+    color: #7f8c8d;
+    margin-bottom: 0.5rem;
+}
+
+.pet-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.8rem;
+}
+
+.btn-sm {
+    padding: 0.3rem 0.7rem;
+    font-size: 0.8rem;
+}
+
+.btn-icon {
+    width: 30px;
+    height: 30px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border-radius: 50%;
+}
+
+.add-pet-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border: 2px dashed #ddd;
+    background: #f8f9fa;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    height: 100%;
+    min-height: 250px;
+}
+
+.add-pet-card:hover {
+    border-color: #2ec4b6;
+    background: rgba(46, 196, 182, 0.05);
+}
+
+.add-pet-card i {
+    font-size: 2rem;
+    color: #2ec4b6;
+    margin-bottom: 0.8rem;
+}
+
+.add-pet-card span {
+    color: #2c3e50;
+    font-weight: 500;
+}
+
+.recent-activity {
+    margin-top: 1.5rem;
+}
+
+.activity-item {
+    display: flex;
+    padding: 0.8rem 0;
+    border-bottom: 1px solid #eee;
+}
+
+.activity-item:last-child {
+    border-bottom: none;
+}
+
+.activity-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(46, 196, 182, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 1rem;
+    color: #2ec4b6;
+    flex-shrink: 0;
+}
+
+.activity-details {
+    flex: 1;
+}
+
+.activity-message {
+    margin: 0 0 0.3rem;
+    font-size: 0.9rem;
+}
+
+.activity-time {
+    font-size: 0.8rem;
+    color: #7f8c8d;
+}
+
+@media (max-width: 992px) {
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .sidebar {
+        margin-bottom: 1.5rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .dashboard {
+        padding: 80px 0 30px;
+    }
+    
+    .pets-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+    
+    .appointment-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.8rem;
+    }
+    
+    .appointment-actions {
+        width: 100%;
+        display: flex;
+        justify-content: flex-end;
+    }
+}
+
+@media (max-width: 576px) {
+    .pets-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .appointment-meta {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+}

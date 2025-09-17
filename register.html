@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Account - PawfectCare</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/pages/register.css">
+    
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container">
+            <a href="index.html" class="logo">Pawfect<span>Care</span></a>
+            <div class="nav-links">
+                <a href="index.html">Home</a>
+                <a href="services.html">Services</a>
+                <a href="booking.html">Book Now</a>
+                <a href="about.html">About Us</a>
+                <a href="contact.html">Contact</a>
+                <div class="auth-buttons">
+                    <a href="login.html" class="btn btn-outline">Login</a>
+                    <a href="register.html" class="btn btn-primary active">Sign Up</a>
+                </div>
+            </div>
+            <button class="hamburger">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Auth Container -->
+    <div class="auth-container">
+        <div class="auth-image"></div>
+        <div class="auth-form-container">
+            <div class="auth-form">
+                <h1>Create an Account</h1>
+                <p style="text-align: center; margin-bottom: 1.5rem; color: #666;">Join our community of pet lovers today!</p>
+                
+                <button class="btn btn-google">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" alt="Google" style="width: 20px;">
+                    Sign up with Google
+                </button>
+                
+                <div class="divider">
+                    <span>or sign up with email</span>
+                </div>
+                
+                <form id="registerForm">
+                    <div id="errorContainer" class="error-message" style="display: none; margin-bottom: 1.5rem;"></div>
+                    
+                    <div class="form-group">
+                        <label for="fullName">Full Name</label>
+                        <input type="text" id="fullName" name="fullName" class="form-control" placeholder="John Doe" required>
+                        <div class="error-message"></div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="email">Email Address</label>
+                        <input type="email" id="email" name="email" class="form-control" placeholder="your.email@example.com" required>
+                        <div class="error-message"></div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="phone">Phone Number</label>
+                        <input type="tel" id="phone" name="phone" class="form-control" placeholder="+1 (555) 123-4567" required>
+                        <div class="error-message"></div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <input type="password" id="password" name="password" class="form-control" placeholder="Create a strong password" required>
+                        <div class="error-message"></div>
+                        <div class="password-strength">
+                            <div class="strength-bar" id="strengthBar"></div>
+                        </div>
+                        <div class="password-requirements">
+                            <div class="requirement" id="length">
+                                <i class="fas fa-circle"></i> At least 8 characters
+                            </div>
+                            <div class="requirement" id="uppercase">
+                                <i class="fas fa-circle"></i> At least 1 uppercase letter
+                            </div>
+                            <div class="requirement" id="number">
+                                <i class="fas fa-circle"></i> At least 1 number
+                            </div>
+                            <div class="requirement" id="special">
+                                <i class="fas fa-circle"></i> At least 1 special character
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="confirmPassword">Confirm Password</label>
+                        <input type="password" id="confirmPassword" name="confirmPassword" class="form-control" placeholder="Confirm your password" required>
+                        <div class="error-message"></div>
+                    </div>
+                    
+                    <div class="form-group terms-checkbox">
+                        <input type="checkbox" id="terms" name="terms" required>
+                        <label for="terms">
+                            I agree to the <a href="#" class="terms-link">Terms of Service</a> and 
+                            <a href="#" class="terms-link">Privacy Policy</a>
+                        </label>
+                        <div class="error-message"></div>
+                    </div>
+                    
+                    
+                    <button type="submit" class="btn btn-primary" id="submitBtn">
+                        <span class="btn-text">Create Account</span>
+                        <span class="btn-loading" style="display: none;">
+                            <i class="fas fa-spinner fa-spin"></i> Creating account...
+                        </span>
+                    </button>
+                    
+                    <div class="terms">
+                        By creating an account, you agree to our terms and conditions.
+                    </div>
+                </form>
+                
+                <div class="auth-footer">
+                    Already have an account? <a href="login.html">Sign in</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Load Font Awesome for loading spinner -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Main JavaScript -->
+    <script src="js/main.js" type="module"></script>
+    <script src="js/register.js" type="module"></script>
+    
+    
+</body>
+</html>

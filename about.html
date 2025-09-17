@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About Us - PawfectCare</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/pages/about.css">
+    <style>
+        /* About Hero Section */
+        .about-hero {
+            background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), 
+                        url('https://images.unsplash.com/photo-1586671267731-da2cf3ceeb80?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80') 
+                        no-repeat center center/cover;
+            color: white;
+            text-align: center;
+            padding: 150px 0 100px;
+            margin-top: 80px;
+        }
+        
+        .about-hero h1 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+        
+        .about-hero p {
+            font-size: 1.2rem;
+            max-width: 700px;
+            margin: 0 auto 2rem;
+            color: rgba(255, 255, 255, 0.9);
+        }
+        
+        /* Our Story Section */
+        .our-story {
+            padding: 100px 0;
+            background-color: white;
+        }
+        
+        .section-header {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+        
+        .section-header h2 {
+            font-size: 2.5rem;
+            color: #2c3e50;
+            margin-bottom: 1rem;
+            position: relative;
+            display: inline-block;
+        }
+        
+        .section-header h2::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 4px;
+            background: #2ec4b6;
+            border-radius: 2px;
+        }
+        
+        .section-header p {
+            color: #7f8c8d;
+            max-width: 700px;
+            margin: 0 auto;
+            font-size: 1.1rem;
+            line-height: 1.8;
+        }
+        
+        .story-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
+            align-items: center;
+        }
+        
+        .story-text h3 {
+            font-size: 1.8rem;
+            color: #2c3e50;
+            margin-bottom: 1.5rem;
+        }
+        
+        .story-text p {
+            color: #555;
+            line-height: 1.8;
+            margin-bottom: 1.5rem;
+        }
+        
+        .story-image {
+            position: relative;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+        
+        .story-image img {
+            width: 100%;
+            height: auto;
+            display: block;
+            transition: transform 0.5s ease;
+        }
+        
+        .story-image:hover img {
+            transform: scale(1.05);
+        }
+        
+        .story-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+            margin-top: 4rem;
+            text-align: center;
+        }
+        
+        .stat-item h4 {
+            font-size: 3rem;
+            color: #2ec4b6;
+            margin: 0 0 0.5rem;
+            font-weight: 700;
+        }
+        
+        .stat-item p {
+            color: #7f8c8d;
+            font-size: 1.1rem;
+            margin: 0;
+        }
+        
+        /* Our Team Section */
+        .our-team {
+            padding: 100px 0;
+            background-color: #f8f9fa;
+        }
+        
+        .team-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+        
+        .team-member {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .team-member:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.1);
+        }
+        
+        .member-image {
+            height: 300px;
+            overflow: hidden;
+        }
+        
+        .member-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+        
+        .team-member:hover .member-image img {
+            transform: scale(1.1);
+        }
+        
+        .member-info {
+            padding: 1.5rem;
+            text-align: center;
+        }
+        
+        .member-info h4 {
+            margin: 0 0 0.3rem;
+            font-size: 1.3rem;
+            color: #2c3e50;
+        }
+        
+        .member-role {
+            color: #2ec4b6;
+            font-weight: 500;
+            margin-bottom: 1rem;
+            display: block;
+        }
+        
+        .member-bio {
+            color: #7f8c8d;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+        }
+        
+        .social-links {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+        }
+        
+        .social-links a {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: #f1f1f1;
+            color: #555;
+            transition: all 0.3s ease;
+        }
+        
+        .social-links a:hover {
+            background: #2ec4b6;
+            color: white;
+            transform: translateY(-3px);
+        }
+        
+        /* Our Values Section */
+        .our-values {
+            padding: 100px 0;
+            background: white;
+        }
+        
+        .values-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+        
+        .value-card {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 2.5rem 2rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        
+        .value-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.1);
+        }
+        
+        .value-icon {
+            width: 80px;
+            height: 80px;
+            background: rgba(46, 196, 182, 0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+            color: #2ec4b6;
+            font-size: 2rem;
+            transition: all 0.3s ease;
+        }
+        
+        .value-card:hover .value-icon {
+            background: #2ec4b6;
+            color: white;
+            transform: rotateY(180deg);
+        }
+        
+        .value-card h3 {
+            font-size: 1.5rem;
+            color: #2c3e50;
+            margin-bottom: 1rem;
+        }
+        
+        .value-card p {
+            color: #7f8c8d;
+            line-height: 1.8;
+            margin: 0;
+        }
+        
+        /* CTA Section */
+        .cta-section {
+            padding: 80px 0;
+            background: linear-gradient(135deg, #2ec4b6 0%, #1a7f7a 100%);
+            color: white;
+            text-align: center;
+        }
+        
+        .cta-content h2 {
+            font-size: 2.5rem;
+            margin-bottom: 1.5rem;
+            color: white;
+        }
+        
+        .cta-content p {
+            font-size: 1.2rem;
+            max-width: 700px;
+            margin: 0 auto 2rem;
+            color: rgba(255, 255, 255, 0.9);
+        }
+        
+        .cta-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.8rem 2rem;
+            border-radius: 50px;
+            font-weight: 500;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+        }
+        
+        .btn-primary {
+            background: white;
+            color: #2ec4b6;
+            border: 2px solid white;
+        }
+        
+        .btn-outline-white {
+            background: transparent;
+            color: white;
+            border: 2px solid white;
+        }
+        
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .btn i {
+            margin-right: 8px;
+        }
+        
+        @media (max-width: 992px) {
+            .story-content {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+            
+            .story-image {
+                order: -1;
+                max-width: 600px;
+                margin: 0 auto;
+            }
+            
+            .story-stats {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+            
+            .cta-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .btn {
+                width: 100%;
+                max-width: 250px;
+                justify-content: center;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .about-hero h1 {
+                font-size: 2.2rem;
+            }
+            
+            .about-hero p {
+                font-size: 1rem;
+                padding: 0 1rem;
+            }
+            
+            .section-header h2 {
+                font-size: 2rem;
+            }
+            
+            .cta-content h2 {
+                font-size: 2rem;
+            }
+            
+            .cta-content p {
+                font-size: 1rem;
+                padding: 0 1rem;
+            }
+        }
+        
+        @media (max-width: 576px) {
+            .about-hero {
+                padding: 120px 0 80px;
+            }
+            
+            .about-hero h1 {
+                font-size: 1.8rem;
+            }
+            
+            .section-header h2 {
+                font-size: 1.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container">
+            <a href="index.html" class="logo">Pawfect<span>Care</span></a>
+            <div class="nav-links">
+                <a href="index.html">Home</a>
+                <a href="services.html">Services</a>
+                <a href="booking.html">Book Now</a>
+                <a href="about.html" class="active">About Us</a>
+                <a href="contact.html">Contact</a>
+                <div class="auth-buttons">
+                    <a href="login.html" class="btn btn-outline">Login</a>
+                    <a href="register.html" class="btn btn-primary">Sign Up</a>
+                </div>
+            </div>
+            <button class="hamburger">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- About Hero -->
+    <section class="about-hero">
+        <div class="container">
+            <h1>About PawfectCare</h1>
+            <p>Dedicated to providing exceptional care for your furry family members with love, expertise, and cutting-edge technology.</p>
+        </div>
+    </section>
+
+    <!-- Our Story -->
+    <section class="our-story">
+        <div class="container">
+            <div class="section-header">
+                <h2>Our Story</h2>
+                <p>Founded in 2018, PawfectCare began with a simple mission: to provide the highest quality pet care services with a personal touch. What started as a small local grooming service has grown into a comprehensive pet care center, thanks to our dedicated team and loyal customers.</p>
+            </div>
+            
+            <div class="story-content">
+                <div class="story-text">
+                    <h3>Compassionate Care for Your Furry Friends</h3>
+                    <p>At PawfectCare, we understand that your pets are more than just animals—they're beloved members of your family. That's why we've created a warm, welcoming environment where your pets can feel safe, comfortable, and loved while in our care.</p>
+                    <p>Our team of certified pet care professionals is passionate about what they do. Each member undergoes rigorous training in animal behavior, first aid, and the latest grooming techniques to ensure your pet receives the best possible care.</p>
+                    <p>We're proud to be at the forefront of pet care innovation, incorporating AI technology to enhance our services while maintaining the personal touch that sets us apart.</p>
+                </div>
+                <div class="story-image">
+                    <img src="https://images.unsplash.com/photo-1544568100-847a948585b9?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80" alt="Our Team">
+                </div>
+            </div>
+            
+            <div class="story-stats">
+                <div class="stat-item">
+                    <h4>2,500+</h4>
+                    <p>Happy Pets</p>
+                </div>
+                <div class="stat-item">
+                    <h4>15+</h4>
+                    <p>Certified Experts</p>
+                </div>
+                <div class="stat-item">
+                    <h4>4.9/5</h4>
+                    <p>Customer Rating</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Our Team -->
+    <section class="our-team">
+        <div class="container">
+            <div class="section-header">
+                <h2>Meet Our Team</h2>
+                <p>Our team of passionate pet care professionals is dedicated to providing the highest level of care for your furry family members.</p>
+            </div>
+            
+            <div class="team-grid">
+                <!-- Team Member 1 -->
+                <div class="team-member">
+                    <div class="member-image">
+                        <img src="https://randomuser.me/api/portraits/women/45.jpg" alt="Sarah Johnson">
+                    </div>
+                    <div class="member-info">
+                        <h4>Sarah Johnson</h4>
+                        <span class="member-role">Founder & Lead Groomer</span>
+                        <p class="member-bio">With over 12 years of experience in pet grooming, Sarah's passion for animal care led her to establish PawfectCare.</p>
+                        <div class="social-links">
+                            <a href="#"><i class="fab fa-facebook-f"></i></a>
+                            <a href="#"><i class="fab fa-instagram"></i></a>
+                            <a href="#"><i class="fab fa-linkedin-in"></i></a>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Team Member 2 -->
+                <div class="team-member">
+                    <div class="member-image">
+                        <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="Michael Chen">
+                    </div>
+                    <div class="member-info">
+                        <h4>Michael Chen</h4>
+                        <span class="member-role">Veterinarian</span>
+                        <p class="member-bio">Dr. Chen brings 8 years of veterinary experience, specializing in preventive care and nutrition for dogs and cats.</p>
+                        <div class="social-links">
+                            <a href="#"><i class="fab fa-facebook-f"></i></a>
+                            <a href="#"><i class="fab fa-instagram"></i></a>
+                            <a href="#"><i class="fab fa-linkedin-in"></i></a>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Team Member 3 -->
+                <div class="team-member">
+                    <div class="member-image">
+                        <img src="https://randomuser.me/api/portraits/women/68.jpg" alt="Emily Rodriguez">
+                    </div>
+                    <div class="member-info">
+                        <h4>Emily Rodriguez</h4>
+                        <span class="member-role">Pet Care Specialist</span>
+                        <p class="member-bio">Emily's gentle approach and animal behavior expertise make her a favorite among our four-legged clients.</p>
+                        <div class="social-links">
+                            <a href="#"><i class="fab fa-facebook-f"></i></a>
+                            <a href="#"><i class="fab fa-instagram"></i></a>
+                            <a href="#"><i class="fab fa-linkedin-in"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Our Values -->
+    <section class="our-values">
+        <div class="container">
+            <div class="section-header">
+                <h2>Our Values</h2>
+                <p>These core values guide everything we do at PawfectCare, ensuring we provide the best possible care for your pets.</p>
+            </div>
+            
+            <div class="values-grid">
+                <!-- Value 1 -->
+                <div class="value-card">
+                    <div class="value-icon">
+                        <i class="fas fa-heart"></i>
+                    </div>
+                    <h3>Compassion</h3>
+                    <p>We treat every pet as if they were our own, with kindness, patience, and understanding.</p>
+                </div>
+                
+                <!-- Value 2 -->
+                <div class="value-card">
+                    <div class="value-icon">
+                        <i class="fas fa-award"></i>
+                    </div>
+                    <h3>Excellence</h3>
+                    <p>We're committed to the highest standards of pet care through continuous learning and improvement.</p>
+                </div>
+                
+                <!-- Value 3 -->
+                <div class="value-card">
+                    <div class="value-icon">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <h3>Safety</h3>
+                    <p>Your pet's well-being is our top priority, with strict safety protocols in place at all times.</p>
+                </div>
+                
+                <!-- Value 4 -->
+                <div class="value-card">
+                    <div class="value-icon">
+                        <i class="fas fa-lightbulb"></i>
+                    </div>
+                    <h3>Innovation</h3>
+                    <p>We embrace technology to enhance our services while maintaining the personal touch.</p>
+                </div>
+                
+                <!-- Value 5 -->
+                <div class="value-card">
+                    <div class="value-icon">
+                        <i class="fas fa-handshake"></i>
+                    </div>
+                    <h3>Trust</h3>
+                    <p>We build lasting relationships based on transparency, reliability, and open communication.</p>
+                </div>
+                
+                <!-- Value 6 -->
+                <div class="value-card">
+                    <div class="value-icon">
+                        <i class="fas fa-leaf"></i>
+                    </div>
+                    <h3>Sustainability</h3>
+                    <p>We're committed to eco-friendly practices that benefit pets, people, and the planet.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta-section">
+        <div class="container">
+            <div class="cta-content">
+                <h2>Ready to Experience the PawfectCare Difference?</h2>
+                <p>Join our community of happy pets and their owners who trust us with their pet care needs.</p>
+                <div class="cta-buttons">
+                    <a href="booking.html" class="btn btn-primary">
+                        <i class="fas fa-calendar-alt"></i> Book an Appointment
+                    </a>
+                    <a href="contact.html" class="btn btn-outline-white">
+                        <i class="fas fa-phone-alt"></i> Contact Us
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-about">
+                    <h3>PawfectCare</h3>
+                    <p>Professional pet care services with AI-powered recognition for a safer, more personalized experience.</p>
+                    <div class="social-links">
+                        <a href="#"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                        <a href="#"><i class="fab fa-linkedin-in"></i></a>
+                    </div>
+                </div>
+                <div class="footer-links">
+                    <h4>Quick Links</h4>
+                    <ul>
+                        <li><a href="index.html">Home</a></li>
+                        <li><a href="services.html">Services</a></li>
+                        <li><a href="about.html">About Us</a></li>
+                        <li><a href="contact.html">Contact</a></li>
+                    </ul>
+                </div>
+                <div class="footer-links">
+                    <h4>Services</h4>
+                    <ul>
+                        <li><a href="services.html#grooming">Grooming</a></li>
+                        <li><a href="services.html#daycare">Daycare</a></li>
+                        <li><a href="services.html#boarding">Boarding</a></li>
+                        <li><a href="booking.html">Book Now</a></li>
+                    </ul>
+                </div>
+                <div class="footer-contact">
+                    <h4>Contact Us</h4>
+                    <ul>
+                        <li><i class="fas fa-map-marker-alt"></i> 123 Jalan Sultan Ahmad Shah, 10050 George Town, Penang, Malaysia</li>
+                        <li><i class="fas fa-phone"></i> +60 4-123 4567</li>
+                        <li><i class="fas fa-envelope"></i> info@pawfectcare.com.my</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2023 PawfectCare. All rights reserved.</p>
+                <div class="footer-legal">
+                    <a href="#">Privacy Policy</a>
+                    <a href="#">Terms of Service</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/main.js"></script>
+</body>
+</html>
