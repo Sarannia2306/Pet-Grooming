@@ -1,10 +1,9 @@
 // register.js — Secure Pet Sitting and Grooming Appointment System
-// Minimal handlers with placeholders for Firebase wiring later.
 
 (() => {
     const qs = (sel, root = document) => root.querySelector(sel);
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i;
-    const phoneRegex = /^[+\d][\d\s\-()]{6,20}$/; // permissive baseline
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}RM/i;
+    const phoneRegex = /^[+\d][\d\s\-()]{6,20}RM/; // permissive baseline
   
     function ensureError(el) {
       let msg = el.nextElementSibling;
@@ -51,14 +50,25 @@
       box.textContent = message || '';
     }
   
-    // ---------- Placeholder register call ----------
+    // Register user with form data
     async function registerUser(name, email, phone, password) {
-      // TODO: connect to Firebase here (createUserWithEmailAndPassword + profile update)
+      // Simulate API call
       await new Promise((r) => setTimeout(r, 800));
-      if (/invalid$/i.test(name)) {
-        return { ok: false, code: 'auth/invalid-name', message: 'Name not allowed.' };
+      
+      // Basic validation
+      if (!name || !email || !phone || !password) {
+        return { ok: false, message: 'All fields are required.' };
       }
-      return { ok: true, userId: 'new-uid-456' };
+      
+      // In a real application, you would send this data to your backend
+      console.log('Registration data:', { name, email, phone });
+      
+      // Return success response
+      return { 
+        ok: true, 
+        message: 'Registration successful!',
+        user: { name, email, phone }
+      };
     }
   
     async function handleRegister(e) {
@@ -121,27 +131,28 @@
       }
   
       if (hasError) return;
-  
+
+      setButtonLoading(submitBtn, true);
+
       try {
-        setButtonLoading(submitBtn, true);
         const result = await registerUser(
           fullName.value.trim(),
           email.value.trim(),
           phone.value.trim(),
           password.value
         );
+
         if (result.ok) {
-          // Success UX: keep it simple here
-          form.reset();
-          showTopError(form, 'Account created successfully! You can now sign in.');
-          // If you want auto-redirect:
-          // window.location.href = 'login.html';
+          // Show success message and redirect to login
+          alert('Registration successful! You can now log in.');
+          window.location.href = 'login.html?registered=true';
         } else {
-          showTopError(form, result.message || 'Sign up failed.');
+          // Show error message
+          showTopError(form, result.message || 'Registration failed. Please try again.');
         }
-      } catch (err) {
-        console.error(err);
-        showTopError(form, 'Unexpected error. Please try again.');
+      } catch (error) {
+        console.error('Registration error:', error);
+        showTopError(form, 'An unexpected error occurred. Please try again.');
       } finally {
         setButtonLoading(submitBtn, false);
       }

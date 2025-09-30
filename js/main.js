@@ -4,11 +4,8 @@
  * It imports and initializes all modules
  */
 
-// Import all modules
-import Navigation from './modules/navigation.js';
+// Only import the form-validation module since it's the only one that exists
 import FormValidation from './modules/form-validation.js';
-import Animations from './modules/animations.js';
-import UIEffects from './modules/ui-effects.js';
 
 // Initialize all modules when the DOM is fully loaded
 document.addEventListener('DOMContentLoaded', () => {
@@ -16,26 +13,12 @@ document.addEventListener('DOMContentLoaded', () => {
         // Add loaded class to body to enable transitions
         document.body.classList.add('loaded');
         
-        // Initialize Navigation
-        const navigation = new Navigation();
-        
-        // Initialize Form Validation
-        const formValidation = new FormValidation();
-        
-        // Initialize Animations
-        const animations = new Animations();
-        
-        // Initialize UI Effects
-        const uiEffects = new UIEffects();
-        
-        // Expose modules to global scope if needed for debugging
-        if (process.env.NODE_ENV === 'development') {
-            window.PawfectCare = {
-                Navigation: navigation,
-                FormValidation: formValidation,
-                Animations: animations,
-                UIEffects: uiEffects
-            };
+        // Initialize Form Validation if the module exists
+        if (typeof FormValidation === 'function') {
+            const formValidation = new FormValidation();
+            if (typeof formValidation.init === 'function') {
+                formValidation.init();
+            }
         }
         
         console.log('PawfectCare: All modules initialized successfully');
@@ -47,11 +30,15 @@ document.addEventListener('DOMContentLoaded', () => {
 // Handle service worker registration for PWA
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js').then(registration => {
-            console.log('ServiceWorker registration successful with scope: ', registration.scope);
-        }).catch(error => {
-            console.log('ServiceWorker registration failed: ', error);
-        });
+        // Use relative path for the service worker
+        navigator.serviceWorker.register('../sw.js', { scope: './' })
+            .then(registration => {
+                console.log('ServiceWorker registration successful with scope: ', registration.scope);
+            })
+            .catch(error => {
+                console.log('ServiceWorker registration failed. This is not critical for the app to function.');
+                console.debug('ServiceWorker error details:', error);
+            });
     });
 }
 

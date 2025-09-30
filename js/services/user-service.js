@@ -162,7 +162,7 @@ export class UserService {
             }
             
             await firebaseSendEmailVerification(user, {
-                url: `${window.location.origin}/login?verified=true`
+                url: `RM{window.location.origin}/login?verified=true`
             });
             
             return { success: true };

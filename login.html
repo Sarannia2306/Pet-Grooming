@@ -8,6 +8,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/pages/login.css">
+
     
 </head>
 <body>
@@ -42,7 +43,7 @@
                 <h1>Welcome Back!</h1>
                 
                 <button class="btn btn-google">
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" alt="Google" style="width: 20px;">
+                    <img src="/images/Google_logo.png" alt="Google" style="width: 20px;">
                     Continue with Google
                 </button>
                 
@@ -50,7 +51,7 @@
                     <span>or sign in with email</span>
                 </div>
                 
-                <form id="loginForm">
+                <form id="loginForm" method="post">
                     <div id="errorContainer" class="error-message" style="display: none; margin-bottom: 1.5rem;"></div>
                     
                     <div class="form-group">
@@ -74,9 +75,9 @@
                     </div>
                     
                     <button type="submit" id="loginBtn" class="btn btn-primary">
-                        <span class="btn-text">Sign In</span>
-                        <span class="btn-loading" style="display: none;">
-                            <i class="fas fa-spinner fa-spin"></i> Signing in...
+                        <span id="btnText">Sign In</span>
+                        <span id="btnSpinner" style="display: none; margin-left: 8px;">
+                            <i class="fas fa-spinner fa-spin"></i>
                         </span>
                     </button>
                 </form>
@@ -91,8 +92,7 @@
     <!-- Load Font Awesome for loading spinner -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- Main JavaScript -->
-    <script src="js/main.js" type="module"></script>
-    <script src="js/login.js" type="module"></script>
+    <!-- Login Script -->
+    <script type="module" src="js/login.js"></script>
 </body>
 </html>

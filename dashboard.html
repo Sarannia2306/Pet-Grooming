@@ -25,7 +25,7 @@
                     <a href="profile.html" class="btn btn-outline">
                         <i class="fas fa-user"></i> My Profile
                     </a>
-                    <a href="login.html" class="btn btn-outline">
+                    <a href="#" id="logoutBtn" class="btn btn-outline">
                         <i class="fas fa-sign-out-alt"></i> Logout
                     </a>
                 </div>
@@ -41,9 +41,25 @@
     <!-- Dashboard -->
     <section class="dashboard">
         <div class="container">
+
+            <!-- Verification Banner -->
+            <div id="verifyEmailBanner" class="alert alert-warning" style="display: none;">
+                <i class="fas fa-exclamation-circle"></i>
+                Please verify your email address to access all features. 
+                <a href="#" id="resendVerificationEmail" class="alert-link">Resend verification email</a>
+            </div>
+            
             <div class="dashboard-header">
-                <h1 class="welcome-message">Welcome back, Sarah!</h1>
-                <div class="dashboard-date" id="currentDate">Tuesday, October 10, 2023</div>
+                <div class="welcome-section">
+                    <h1 class="welcome-message">Welcome back, <span id="userGreeting">User</span>!</h1>
+                    <div class="user-meta">
+                        <span class="user-email" id="userEmail">Loading...</span>
+                        <span class="verification-status" id="verificationStatus">
+                            <i class="fas fa-circle-notch fa-spin"></i> Verifying...
+                        </span>
+                    </div>
+                </div>
+                <div class="dashboard-date" id="currentDate"></div>
             </div>
             
             <div class="dashboard-grid">
@@ -82,7 +98,7 @@
                             </a>
                         </li>
                         <li>
-                            <a href="help.html">
+                            <a href="help-support.html">
                                 <i class="fas fa-question-circle"></i> Help & Support
                             </a>
                         </li>
@@ -91,6 +107,26 @@
                 
                 <!-- Main Content -->
                 <main class="main-content">
+                    <!-- My Pets -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">My Furry Family</h2>
+                            <a href="add-pet.html" class="btn btn-text">
+                                <i class="fas fa-plus"></i> Add Pet
+                            </a>
+                        </div>
+                        <div class="card-body" id="petsContainer">
+                            <div class="loading-section">
+                                <i class="fas fa-paw fa-spin"></i>
+                                <p>Loading your pets...</p>
+                            </div>
+                        </div>
+
+                        <div style="text-align: right; margin-top: 1rem;">
+                            <a href="pets.html" class="btn btn-outline btn-sm">View All</a>
+                        </div>
+                    </div>
+
                     <!-- Upcoming Appointments -->
                     <div class="card appointments">
                         <div class="card-header">
@@ -135,97 +171,17 @@
                         </div>
                     </div>
                     
-                    <!-- My Pets -->
-                    <div class="card">
-                        <div class="card-header">
-                            <h2 class="card-title">My Pets</h2>
-                            <button class="btn btn-primary" id="addPetBtn">
-                                <i class="fas fa-plus"></i> Add Pet
-                            </button>
-                        </div>
-                        
-                        <div class="pets-grid">
-                            <!-- Pet Card 1 -->
-                            <div class="pet-card">
-                                <div class="pet-image">
-                                    <img src="https://images.unsplash.com/photo-1548199973-03cce0bbc87b?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80" alt="Max">
-                                </div>
-                                <div class="pet-details">
-                                    <h3 class="pet-name">Max</h3>
-                                    <div class="pet-breed">Golden Retriever • 3 years</div>
-                                    <div class="pet-actions">
-                                        <button class="btn btn-outline btn-sm">
-                                            <i class="far fa-edit"></i> Edit
-                                        </button>
-                                        <button class="btn btn-outline btn-sm">
-                                            <i class="far fa-calendar-alt"></i> Book
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <!-- Pet Card 2 -->
-                            <div class="pet-card">
-                                <div class="pet-image">
-                                    <img src="https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80" alt="Luna">
-                                </div>
-                                <div class="pet-details">
-                                    <h3 class="pet-name">Luna</h3>
-                                    <div class="pet-breed">Siamese Cat • 2 years</div>
-                                    <div class="pet-actions">
-                                        <button class="btn btn-outline btn-sm">
-                                            <i class="far fa-edit"></i> Edit
-                                        </button>
-                                        <button class="btn btn-outline btn-sm">
-                                            <i class="far fa-calendar-alt"></i> Book
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <!-- Add New Pet Card -->
-                            <div class="pet-card add-pet-card" id="addNewPetCard">
-                                <i class="fas fa-plus"></i>
-                                <span>Add New Pet</span>
-                            </div>
-                        </div>
-                    </div>
-                    
                     <!-- Recent Activity -->
                     <div class="card">
                         <div class="card-header">
                             <h2 class="card-title">Recent Activity</h2>
                         </div>
                         
-                        <div class="recent-activity">
-                            <div class="activity-item">
-                                <div class="activity-icon">
-                                    <i class="fas fa-calendar-check"></i>
-                                </div>
-                                <div class="activity-details">
-                                    <p class="activity-message">Your grooming appointment with Max has been confirmed for October 15, 2023</p>
-                                    <div class="activity-time">2 hours ago</div>
-                                </div>
-                            </div>
-                            
-                            <div class="activity-item">
-                                <div class="activity-icon" style="background: rgba(52, 152, 219, 0.1); color: #3498db;">
-                                    <i class="fas fa-comment-dots"></i>
-                                </div>
-                                <div class="activity-details">
-                                    <p class="activity-message">New message from Dr. Smith regarding Luna's upcoming checkup</p>
-                                    <div class="activity-time">1 day ago</div>
-                                </div>
-                            </div>
-                            
-                            <div class="activity-item">
-                                <div class="activity-icon" style="background: rgba(46, 204, 113, 0.1); color: #2ecc71;">
-                                    <i class="fas fa-check-circle"></i>
-                                </div>
-                                <div class="activity-details">
-                                    <p class="activity-message">Payment of $65.00 for Max's grooming session has been processed</p>
-                                    <div class="activity-time">3 days ago</div>
-                                </div>
+                        <div class="recent-activity" id="recentActivity">
+                            <!-- Activities will be dynamically added here -->
+                            <div class="no-activity-message" id="noActivityMessage" style="text-align: center; padding: 2rem; color: #6c757d;">
+                                <i class="far fa-bell" style="font-size: 2rem; margin-bottom: 1rem; opacity: 0.7;"></i>
+                                <p>No recent activity to show</p>
                             </div>
                         </div>
                         
@@ -238,32 +194,46 @@
         </div>
     </section>
 
-    <script src="js/main.js"></script>
+    <!-- Firebase and Auth Scripts -->
+    <script type="module" src="js/dashboard.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Set current date
-            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-            const today = new Date();
-            document.getElementById('currentDate').textContent = today.toLocaleDateString('en-US', options);
-            
-            // Add pet button click handlers
-            document.getElementById('addPetBtn').addEventListener('click', function() {
+    // Non-module scripts
+    document.addEventListener('DOMContentLoaded', function() {
+        // Set current date
+        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        const today = new Date();
+        const dateElement = document.getElementById('currentDate');
+        if (dateElement) {
+            dateElement.textContent = today.toLocaleDateString('en-US', options);
+        }
+        
+        // Add pet button click handler
+        const addPetBtn = document.getElementById('addPetBtn');
+        if (addPetBtn) {
+            addPetBtn.addEventListener('click', function() {
                 window.location.href = 'add-pet.html';
             });
-            
-            document.getElementById('addNewPetCard').addEventListener('click', function() {
+        }
+
+        // Add new pet card click handler
+        const addNewPetCard = document.getElementById('addNewPetCard');
+        if (addNewPetCard) {
+            addNewPetCard.addEventListener('click', function() {
                 window.location.href = 'add-pet.html';
             });
-            
-            // Mobile menu toggle
-            const hamburger = document.querySelector('.hamburger');
-            const navLinks = document.querySelector('.nav-links');
-            
+        }
+        
+        // Mobile menu toggle
+        const hamburger = document.querySelector('.hamburger');
+        const navLinks = document.querySelector('.nav-links');
+        
+        if (hamburger && navLinks) {
             hamburger.addEventListener('click', function() {
                 this.classList.toggle('active');
                 navLinks.classList.toggle('active');
             });
-        });
+        }
+    });
     </script>
 </body>
 </html>

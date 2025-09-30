@@ -4,36 +4,317 @@
  * and user data display
  */
 
-import { userService } from './services/user-service.js';
+import { auth, database, ref, get, update, signOutUser } from './firebase-config.js';
+import { onValue } from 'https://www.gstatic.com/firebasejs/10.1.0/firebase-database.js';
+import { showAlert, requireAuth } from './auth-utils.js';
 
-document.addEventListener('DOMContentLoaded', () => {
-    // Check authentication state
-    checkAuth();
-    
-    // Initialize UI components
-    initUI();
-    
-    // Set up event listeners
-    setupEventListeners();
-});
+// DOM Elements
+const userGreeting = document.getElementById('userGreeting');
+const userEmail = document.getElementById('userEmail');
+const userAvatar = document.getElementById('userAvatar');
+// Removed duplicate declaration of logoutBtn
 
-/**
- * Check if user is authenticated
- */
-async function checkAuth() {
+// Track initialization state
+let isInitialized = false;
+
+// Check authentication state and initialize dashboard
+const initDashboard = async () => {
+    // Prevent multiple initializations
+    if (isInitialized) {
+        console.log('Dashboard already initialized');
+        return;
+    }
+    
+    // Check if we're on the login page
+    if (window.location.pathname.endsWith('login.html')) {
+        console.log('On login page, skipping dashboard init');
+        return;
+    }
+    
     try {
-        const user = await userService.getCurrentUser();
+        console.log('Initializing dashboard...');
+        isInitialized = true;
+        
+        // First, check if we have a user in auth state
+        let user = auth.currentUser;
+        
+        // If no user, try to get one from the auth state observer
         if (!user) {
-            // Redirect to login if not authenticated
-            window.location.href = 'login.html?redirect=' + encodeURIComponent(window.location.pathname);
+            user = await new Promise((resolve) => {
+                const unsubscribe = auth.onAuthStateChanged((authUser) => {
+                    console.log('Auth state changed:', authUser ? 'User found' : 'No user');
+                    unsubscribe();
+                    resolve(authUser);
+                }, (error) => {
+                    console.error('Auth state error:', error);
+                    unsubscribe();
+                    resolve(null);
+                });
+                
+                // Set a timeout to prevent hanging if auth state never changes
+                setTimeout(() => {
+                    console.log('Auth state timeout reached');
+                    unsubscribe();
+                    resolve(null);
+                }, 3000);
+            });
+        }
+        
+        console.log('Auth state check complete. User:', user ? user.uid : 'No user');
+        
+        // If still no user, redirect to login
+        if (!user) {
+            console.log('No authenticated user, redirecting to login');
+            // Store the current URL to redirect back after login
+            sessionStorage.setItem('redirectAfterLogin', window.location.pathname);
+            window.location.href = 'login.html';
             return;
         }
         
-        // Load user data
-        loadUserData(user);
+        // Check if user's email is verified
+        if (!user.emailVerified) {
+            console.log('Email not verified, showing verification banner');
+            const verifyBanner = document.getElementById('verifyEmailBanner');
+            if (verifyBanner) {
+                verifyBanner.style.display = 'flex';
+            }
+        }
+        
+        // Load user data and setup UI
+        try {
+            await loadUserData(user);
+            setupEventListeners();
+            updateGreeting();
+            console.log('Dashboard initialization complete');
+        } catch (error) {
+            console.error('Error loading user data:', error);
+            showAlert('An error occurred while loading your data. Please refresh the page.', 'error');
+        }
+        
     } catch (error) {
-        console.error('Auth check failed:', error);
-        window.location.href = 'login.html?error=auth_check_failed';
+        console.error('Error initializing dashboard:', error);
+        showAlert('An error occurred while loading the dashboard. Please try again.', 'error');
+        // Don't redirect to login on error to prevent loops
+    }
+};
+
+// Initialize dashboard when DOM is loaded
+document.addEventListener('DOMContentLoaded', initDashboard);
+
+/**
+ * Fetch and display user's pets
+ * @param {string} userId - The ID of the logged-in user
+ */
+async function loadUserPets(userId) {
+    try {
+        console.log('Loading pets for user:', userId);
+        const petsRef = ref(database, 'pets');
+        
+        // Listen for changes to the pets data
+        onValue(petsRef, (snapshot) => {
+            const pets = [];
+            snapshot.forEach((childSnapshot) => {
+                const pet = childSnapshot.val();
+                // Only include pets that belong to the current user
+                if (pet.ownerId === userId) {
+                    pets.push({
+                        id: childSnapshot.key,
+                        ...pet
+                    });
+                }
+            });
+            
+            // Display the pets in the UI
+            renderPets(pets);
+        }, {
+            onlyOnce: false // Listen for real-time updates
+        });
+        
+    } catch (error) {
+        console.error('Error loading pets:', error);
+        showAlert('Failed to load pets. Please try again.', 'error');
+    }
+}
+
+/**
+ * Render the user's pets in the dashboard
+ * @param {Array} pets - Array of pet objects
+ */
+function renderPets(pets) {
+    const petsContainer = document.getElementById('petsContainer');
+    if (!petsContainer) return;
+    
+    if (pets.length === 0) {
+        petsContainer.innerHTML = `
+            <div class="no-pets">
+                <i class="fas fa-paw"></i>
+                <p>You haven't added any pets yet.</p>
+                <a href="add-pet.html" class="btn btn-primary">Add Your First Pet</a>
+            </div>
+        `;
+        return;
+    }
+    
+    // Limit to showing 3 most recent pets in the dashboard
+    const recentPets = pets.slice(0, 3);
+    
+    const petsHTML = `
+        <div class="pets-grid">
+            ${recentPets.map(pet => `
+                <div class="pet-card">
+                    <div class="pet-image" style="background-color: ${getRandomColor()}">
+                        ${pet.photoURL 
+                            ? `<img src="${pet.photoURL}" alt="${pet.name}" onerror="this.onerror=null; this.parentElement.innerHTML='<i class=\'fas fa-${pet.type === 'dog' ? 'dog' : pet.type === 'cat' ? 'cat' : 'paw'}\'></i>';" />`
+                            : `<i class="fas fa-${pet.type === 'dog' ? 'dog' : pet.type === 'cat' ? 'cat' : 'paw'}"></i>`
+                        }
+                    </div>
+                    <div class="pet-info">
+                        <h3>${pet.name}</h3>
+                        <p>${pet.breed || 'Mixed breed'}</p>
+                        <p>${pet.age ? `${pet.age} years old` : 'Age not specified'}</p>
+                    </div>
+                </div>
+            `).join('')}
+        </div>
+        ${pets.length > 3 ? `
+            <div class="view-all-pets">
+                <a href="pets.html" class="btn btn-text">View All Pets (${pets.length}) <i class="fas fa-arrow-right"></i></a>
+            </div>
+        ` : ''}
+    `;
+    
+    petsContainer.innerHTML = petsHTML;
+}
+
+/**
+ * Load and display user data from database
+ * @param {Object} user - Firebase auth user object
+ */
+async function loadUserData(user) {
+    // Load user's pets
+    loadUserPets(user.uid);
+    try {
+        const userRef = ref(database, 'users/' + user.uid);
+        const snapshot = await get(userRef);
+        
+        if (snapshot.exists()) {
+            const userData = snapshot.val();
+            
+            // Update UI with user data
+            updateUserProfileUI(user, userData);
+            
+            // If email is verified in auth but not in database, update database
+            if (user.emailVerified && (!userData.emailVerified || userData.emailVerified === false)) {
+                await update(userRef, { 
+                    emailVerified: true,
+                    lastVerified: new Date().toISOString() 
+                });
+            }
+            
+            return userData;
+        } else {
+            // Create user profile if it doesn't exist
+            const newUserData = {
+                name: user.displayName || user.email.split('@')[0],
+                email: user.email,
+                emailVerified: user.emailVerified || false,
+                createdAt: new Date().toISOString(),
+                lastLogin: new Date().toISOString(),
+                photoURL: user.photoURL || ''
+            };
+            
+            await update(userRef, newUserData);
+            updateUserProfileUI(user, newUserData);
+            return newUserData;
+        }
+    } catch (error) {
+        console.error('Error loading user data:', error);
+        throw new Error('Failed to load user data');
+    }
+}
+
+/**
+ * Update the UI with user profile data
+ * @param {Object} user - Firebase auth user
+ * @param {Object} userData - User data from database
+ */
+function updateUserProfileUI(user, userData) {
+    try {
+        // Update greeting and name
+        const userName = userData.name || user.displayName || user.email.split('@')[0];
+        
+        // Only update elements that exist
+        const greetingElement = document.getElementById('userGreeting');
+        if (greetingElement) {
+            greetingElement.textContent = userName;
+        }
+        
+        const userNameElement = document.getElementById('userName');
+        if (userNameElement) {
+            userNameElement.textContent = userName;
+        }
+        
+        // Update email
+        const emailElement = document.getElementById('userEmail');
+        if (emailElement) {
+            emailElement.textContent = user.email || '';
+        }
+        
+        // Update avatar if it exists
+        const avatarElement = document.getElementById('userAvatar');
+        if (avatarElement) {
+            if (user.photoURL) {
+                avatarElement.style.backgroundImage = `url('${user.photoURL}')`;
+                avatarElement.textContent = '';
+            } else {
+                const initials = userName.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
+                avatarElement.textContent = initials;
+                avatarElement.style.backgroundColor = getRandomColor();
+            }
+        }
+        
+        // Update verification status
+        updateVerificationUI(user);
+        
+    } catch (error) {
+        console.error('Error updating user profile UI:', error);
+        // Don't throw the error to prevent breaking the auth flow
+    }
+}
+
+/**
+ * Update UI based on email verification status
+ * @param {Object} user - Firebase auth user
+ */
+function updateVerificationUI(user) {
+    try {
+        const verifyBanner = document.getElementById('verifyEmailBanner');
+        const verifyStatus = document.getElementById('verificationStatus');
+        
+        // Only proceed if we have a valid user
+        if (!user) {
+            console.warn('No user provided to updateVerificationUI');
+            return;
+        }
+        
+        // Update verification banner if it exists
+        if (verifyBanner) {
+            verifyBanner.style.display = user.emailVerified ? 'none' : 'flex';
+        }
+        
+        // Update verification status if it exists
+        if (verifyStatus) {
+            if (user.emailVerified) {
+                verifyStatus.innerHTML = '<i class="fas fa-check"></i> Verified';
+                verifyStatus.className = 'verification-status';
+            } else {
+                verifyStatus.innerHTML = '<i class="fas fa-times"></i> Unverified';
+                verifyStatus.className = 'verification-status unverified';
+            }
+        }
+    } catch (error) {
+        console.error('Error updating verification UI:', error);
+        // Don't throw the error to prevent breaking the auth flow
     }
 }
 
@@ -49,7 +330,7 @@ function initUI() {
     
     // Initialize tooltips
     const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-    tooltipTriggerList.map(function (tooltipTriggerEl) {
+    tooltipTriggerList.forEach(function (tooltipTriggerEl) {
         return new bootstrap.Tooltip(tooltipTriggerEl);
     });
 }
@@ -58,59 +339,64 @@ function initUI() {
  * Set up event listeners
  */
 function setupEventListeners() {
-    // Logout button
-    const logoutBtn = document.getElementById('logoutBtn');
-    if (logoutBtn) {
-        logoutBtn.addEventListener('click', handleLogout);
+    // Sign out button
+    const logoutButton = document.getElementById('logoutBtn');
+    
+    if (logoutButton) {
+        // Remove any existing event listeners
+        const newLogoutButton = logoutButton.cloneNode(true);
+        logoutButton.parentNode.replaceChild(newLogoutButton, logoutButton);
+        
+        // Add click event listener
+        newLogoutButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            handleSignOut();
+        });
+    }
+    
+    // Add click event listener to the resend verification button
+    const resendVerificationBtn = document.getElementById('resendVerificationBtn');
+    if (resendVerificationBtn) {
+        resendVerificationBtn.addEventListener('click', handleResendVerification);
+    }
+    
+    // Resend verification email
+    const resendVerification = document.getElementById('resendVerificationEmail');
+    if (resendVerification) {
+        resendVerification.addEventListener('click', async (e) => {
+            e.preventDefault();
+            await handleResendVerification();
+        });
     }
     
     // Mobile menu toggle
-    const mobileMenuToggle = document.getElementById('mobileMenuToggle');
-    if (mobileMenuToggle) {
-        mobileMenuToggle.addEventListener('click', toggleMobileMenu);
+    const hamburger = document.querySelector('.hamburger');
+    const navLinks = document.querySelector('.nav-links');
+    
+    if (hamburger && navLinks) {
+        hamburger.addEventListener('click', () => {
+            hamburger.classList.toggle('active');
+            navLinks.classList.toggle('active');
+        });
     }
     
-    // Close mobile menu when clicking outside
-    document.addEventListener('click', (e) => {
-        const mobileMenu = document.getElementById('mobileMenu');
-        if (mobileMenu && !mobileMenu.contains(e.target) && e.target !== mobileMenuToggle) {
-            mobileMenu.classList.remove('show');
-        }
-    });
+    // Add new pet button
+    const addPetBtn = document.getElementById('addPetBtn');
+    if (addPetBtn) {
+        addPetBtn.addEventListener('click', () => {
+            window.location.href = 'add-pet.html';
+        });
+    }
+    
+    // Add new pet card
+    const addNewPetCard = document.getElementById('addNewPetCard');
+    if (addNewPetCard) {
+        addNewPetCard.addEventListener('click', () => {
+            window.location.href = 'add-pet.html';
+        });
+    }
 }
 
-/**
- * Load and display user data
- * @param {Object} user - User data
- */
-function loadUserData(user) {
-    // Update user profile section
-    const userNameElement = document.getElementById('userName');
-    const userEmailElement = document.getElementById('userEmail');
-    const userAvatarElement = document.getElementById('userAvatar');
-    
-    if (userNameElement) {
-        userNameElement.textContent = user.displayName || 'User';
-    }
-    
-    if (userEmailElement) {
-        userEmailElement.textContent = user.email || '';
-    }
-    
-    if (userAvatarElement) {
-        // Use the first letter of the display name or a default avatar
-        const displayName = user.displayName || 'U';
-        userAvatarElement.textContent = displayName.charAt(0).toUpperCase();
-        
-        // Add a random background color based on the user's name
-        const colors = ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b', '#5a5c69'];
-        const colorIndex = displayName.length % colors.length;
-        userAvatarElement.style.backgroundColor = colors[colorIndex];
-    }
-    
-    // Update the greeting based on time of day
-    updateGreeting();
-}
 
 /**
  * Update the greeting based on the time of day
@@ -134,55 +420,65 @@ function updateGreeting() {
 }
 
 /**
- * Handle user logout
- * @param {Event} e - The click event
+ * Handle user sign out
  */
-async function handleLogout(e) {
-    e.preventDefault();
-    
+async function handleSignOut() {
     try {
-        // Show loading state
-        const button = e.target.closest('button');
-        const originalText = button.innerHTML;
-        button.disabled = true;
-        button.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Signing out...';
+        // Sign out from Firebase
+        await auth.signOut();
         
-        // Sign out
-        await userService.signOut();
+        // Clear all local data
+        sessionStorage.clear();
+        localStorage.clear();
         
         // Redirect to login page
         window.location.href = 'login.html';
-    } catch (error) {
-        console.error('Logout failed:', error);
-        alert('Failed to sign out. Please try again.');
         
-        // Reset button state
-        const button = e.target.closest('button');
-        button.disabled = false;
-        button.innerHTML = originalText;
+    } catch (error) {
+        console.error('Sign out error:', error);
+        // Still redirect even if there's an error
+        window.location.href = 'login.html';
     }
 }
 
 /**
- * Toggle mobile menu
- * @param {Event} e - The click event
+ * Handle resend verification email
  */
-function toggleMobileMenu(e) {
-    e.preventDefault();
-    const mobileMenu = document.getElementById('mobileMenu');
-    if (mobileMenu) {
-        mobileMenu.classList.toggle('show');
+async function handleResendVerification() {
+    const user = auth.currentUser;
+    if (!user) return;
+    
+    try {
+        await sendEmailVerification(user);
+        showAlert('Verification email sent. Please check your inbox.', 'success');
+    } catch (error) {
+        console.error('Error sending verification email:', error);
+        showAlert('Failed to send verification email. Please try again later.', 'error');
     }
+}
+
+/**
+ * Generate a random color for avatar background
+ */
+function getRandomColor() {
+    const colors = [
+        '#4361ee', '#3f37c9', '#4895ef', '#4cc9f0', '#4895ef',
+        '#4361ee', '#3f37c9', '#7209b7', '#b5179e', '#f72585'
+    ];
+    return colors[Math.floor(Math.random() * colors.length)];
 }
 
 // Add a global error handler
 window.addEventListener('error', (event) => {
     console.error('Global error:', event.error);
-    // You could show a user-friendly error message here
+    showAlert('An unexpected error occurred. Please try again.', 'error');
 });
 
 // Add an unhandled promise rejection handler
 window.addEventListener('unhandledrejection', (event) => {
     console.error('Unhandled promise rejection:', event.reason);
-    // You could show a user-friendly error message here
+    showAlert('An unexpected error occurred. Please refresh the page and try again.', 'error');
 });
+
+// Export functions that need to be accessible from HTML
+export { handleSignOut as handleLogout };

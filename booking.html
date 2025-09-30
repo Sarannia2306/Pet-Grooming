@@ -124,12 +124,20 @@
                 <h2>Appointment Details</h2>
                 <form id="bookingForm">
                     <div class="form-group">
+                        <label for="pet">Select Pet</label>
+                        <select id="pet" class="form-control" required>
+                            <option value="">Loading your pets...</option>
+                        </select>
+                        <a href="add-pet.html" class="small-link" style="display: block; margin-top: 5px;">+ Add New Pet</a>
+                    </div>
+                    
+                    <div class="form-group">
                         <label for="service">Service Type</label>
                         <select id="service" class="form-control" required>
                             <option value="">Select a service</option>
-                            <option value="grooming">Grooming</option>
-                            <option value="daycare">Daycare</option>
-                            <option value="boarding">Boarding</option>
+                            <option value="grooming">Grooming - $40-80</option>
+                            <option value="daycare">Daycare - $30/day</option>
+                            <option value="boarding">Boarding - $50/night</option>
                         </select>
                     </div>
                     
@@ -149,19 +157,8 @@
                         </select>
                     </div>
                     
-                    <div class="form-group">
-                        <label for="pet">Select Pet</label>
-                        <select id="pet" class="form-control" required>
-                            <option value="">Select your pet</option>
-                            <option value="max">Max (Golden Retriever)</option>
-                            <option value="bella">Bella (Persian Cat)</option>
-                            <option value="addNew">+ Add New Pet</option>
-                        </select>
-                    </div>
                     
-                    <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">
-                        Book Appointment
-                    </button>
+                    <button type="submit" class="btn btn-primary btn-block">Continue to Payment</button>
                 </form>
             </div>
             
@@ -224,37 +221,36 @@
         </div>
     </footer>
 
+    <!-- Firebase SDK -->
+    <script type="module" src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script type="module" src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+    <script type="module" src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
+    
+    <!-- Your Firebase configuration -->
+    <script type="module" src="js/firebase-config.js"></script>
+    
+    <!-- Main scripts -->
+    <script type="module" src="js/booking.js"></script>
     <script src="js/main.js"></script>
+    
     <script>
-        // Set minimum date to today
+        // Handle file upload for AI pet recognition
         document.addEventListener('DOMContentLoaded', function() {
-            const today = new Date();
-            const dd = String(today.getDate()).padStart(2, '0');
-            const mm = String(today.getMonth() + 1).padStart(2, '0');
-            const yyyy = today.getFullYear();
-            document.getElementById('date').min = `${yyyy}-${mm}-${dd}`;
-            
-            // Handle file upload
             const uploadBox = document.getElementById('aiUploadBox');
             const petImage = document.getElementById('petImage');
             
-            uploadBox.addEventListener('click', function() {
-                petImage.click();
-            });
-            
-            petImage.addEventListener('change', function(e) {
-                if (e.target.files.length > 0) {
-                    // In a real app, you would process the image here
-                    alert('Pet image uploaded successfully!');
-                }
-            });
-            
-            // Handle form submission
-            document.getElementById('bookingForm').addEventListener('submit', function(e) {
-                e.preventDefault();
-                alert('Appointment booked successfully!');
-                // In a real app, you would submit the form data to a server here
-            });
+            if (uploadBox && petImage) {
+                uploadBox.addEventListener('click', function() {
+                    petImage.click();
+                });
+                
+                petImage.addEventListener('change', function(e) {
+                    if (e.target.files.length > 0) {
+                        // In a real app, you would process the image here
+                        alert('Pet image uploaded successfully!');
+                    }
+                });
+            }
         });
     </script>
 </body>

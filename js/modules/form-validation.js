@@ -64,13 +64,13 @@ export default class FormValidation {
         
         // Check required fields
         if (isRequired && !value) {
-            this.showError(input, `${fieldName} is required`);
+            this.showError(input, `RM{fieldName} is required`);
             return false;
         }
         
         // Email validation
         if (input.type === 'email' && value) {
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+RM/;
             if (!emailRegex.test(value)) {
                 this.showError(input, 'Please enter a valid email address');
                 return false;
@@ -79,7 +79,7 @@ export default class FormValidation {
         
         // Phone number validation (basic)
         if (input.type === 'tel' && value) {
-            const phoneRegex = /^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$/;
+            const phoneRegex = /^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}RM/;
             if (!phoneRegex.test(value)) {
                 this.showError(input, 'Please enter a valid phone number');
                 return false;
