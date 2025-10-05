@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SnugglePaw Admin</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./css/admin.css" />
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <a class="brand" href="#"><i class="fa fa-paw"></i> Snuggle<span>Paw</span></a>
+      <nav class="nav" id="sideNav">
+        <a href="#" data-section="dashboard" class="active"><i class="fa fa-gauge"></i> Dashboard</a>
+        <a href="#" data-section="users"><i class="fa fa-users"></i> Users</a>
+        <a href="#" data-section="pets"><i class="fa fa-dog"></i> Pets</a>
+        <a href="#" data-section="appointments"><i class="fa fa-calendar-check"></i> Appointments</a>
+        <a href="#" data-section="services"><i class="fa fa-scissors"></i> Services</a>
+        <a href="#" data-section="payments"><i class="fa fa-credit-card"></i> Payments</a>
+        <a href="#" data-section="reports"><i class="fa fa-chart-line"></i> Reports</a>
+        <a href="#" data-section="reviews"><i class="fa fa-comments"></i> Reviews</a>
+        <a href="#" data-section="content"><i class="fa fa-file-lines"></i> Content</a>
+        <a href="#" data-section="settings"><i class="fa fa-gear"></i> Settings</a>
+        <a href="#" id="signOutBtn"><i class="fa fa-right-from-bracket"></i> Sign out</a>
+      </nav>
+    </aside>
+
+    <main>
+      <div class="topbar">
+        <div>
+          <strong>Admin Panel</strong>
+        </div>
+        <div class="actions">
+          <span id="adminEmail" class="badge"><i class="fa fa-user-shield"></i> </span>
+        </div>
+      </div>
+
+      <div class="content">
+        <!-- Dashboard -->
+        <section id="section-dashboard" class="section active">
+          <h2>Overview</h2>
+          <div class="cards">
+            <div class="card">
+              <h3>Total Appointments</h3>
+              <div id="metric-appointments" class="big">0</div>
+            </div>
+            <div class="card">
+              <h3>Active Users</h3>
+              <div id="metric-users" class="big">0</div>
+            </div>
+            <div class="card">
+              <h3>Pending Payments</h3>
+              <div id="metric-pending" class="big">0</div>
+            </div>
+          </div>
+          <div class="card">
+            <h3>Quick Links</h3>
+            <div class="controls">
+              <button class="btn" data-jump="appointments"><i class="fa fa-calendar-check"></i> Manage Appointments</button>
+              <button class="btn" data-jump="users"><i class="fa fa-users"></i> Manage Users</button>
+              <button class="btn" data-jump="services"><i class="fa fa-scissors"></i> Manage Services</button>
+              <button class="btn" data-jump="payments"><i class="fa fa-credit-card"></i> View Payments</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- Users -->
+        <section id="section-users" class="section">
+          <h2>Manage Users</h2>
+          <div class="controls">
+            <input id="userSearch" class="input" placeholder="Search by name or email" />
+            <select id="userStatus" class="input">
+              <option value="">All Status</option>
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+            </select>
+            <button id="exportUsers" class="btn"><i class="fa fa-download"></i> Export CSV</button>
+          </div>
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Name</th><th>Email</th><th>Phone</th><th>Status</th><th>Role</th><th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="usersTbody"></tbody>
+          </table>
+        </section>
+
+        <!-- Pets -->
+        <section id="section-pets" class="section">
+          <h2>Manage Pet Profiles</h2>
+          <p class="muted">Review AI categorization and make manual corrections.</p>
+          <table class="table">
+            <thead>
+              <tr><th>Owner</th><th>Pet Name</th><th>Type</th><th>Breed</th><th>AI Category</th><th>Actions</th></tr>
+            </thead>
+            <tbody id="petsTbody"></tbody>
+          </table>
+        </section>
+
+        <!-- Pet Edit Modal -->
+        <div id="petModal" class="modal" aria-hidden="true">
+          <div class="modal__dialog">
+            <div class="modal__header">
+              <h3 id="petModalTitle">Edit Pet</h3>
+              <button id="petModalClose" class="icon-btn" aria-label="Close"><i class="fa fa-xmark"></i></button>
+            </div>
+            <form id="petForm" class="modal__body">
+              <input type="hidden" id="petId" />
+              <input type="hidden" id="petOwnerId" />
+              <div class="grid2">
+                <div>
+                  <label for="petNameInput">Pet Name</label>
+                  <input id="petNameInput" class="input" type="text" required />
+                </div>
+                <div>
+                  <label for="petTypeInput">Type</label>
+                  <input id="petTypeInput" class="input" type="text" placeholder="Dog / Cat / ..." />
+                </div>
+              </div>
+              <div class="grid2">
+                <div>
+                  <label for="petBreedInput">Breed</label>
+                  <input id="petBreedInput" class="input" type="text" />
+                </div>
+                <div>
+                  <label for="petAiCatInput">AI Category</label>
+                  <input id="petAiCatInput" class="input" type="text" />
+                </div>
+              </div>
+              <div class="modal__footer">
+                <button type="button" id="petCancel" class="btn">Cancel</button>
+                <button type="submit" id="petSave" class="btn primary"><i class="fa fa-check"></i> Save</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Appointments -->
+        <section id="section-appointments" class="section">
+          <h2>Appointment Management</h2>
+          <div class="controls">
+            <select id="apptFilter" class="input">
+              <option value="">All</option>
+              <option value="upcoming">Upcoming</option>
+              <option value="past">Past</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+          </div>
+          <table class="table">
+            <thead>
+              <tr><th>Pet</th><th>Service</th><th>Date</th><th>Time</th><th>Status</th><th>Actions</th></tr>
+            </thead>
+            <tbody id="apptsTbody"></tbody>
+          </table>
+        </section>
+
+        <!-- Appointment Modal -->
+        <div id="apptModal" class="modal" aria-hidden="true">
+          <div class="modal__dialog">
+            <div class="modal__header">
+              <h3 id="apptModalTitle">Reschedule Appointment</h3>
+              <button id="apptModalClose" class="icon-btn" aria-label="Close"><i class="fa fa-xmark"></i></button>
+            </div>
+            <form id="apptForm" class="modal__body">
+              <input type="hidden" id="apptKey" />
+              <div class="grid2">
+                <div>
+                  <label for="apptDate">Date</label>
+                  <input id="apptDate" class="input" type="date" required />
+                </div>
+                <div>
+                  <label for="apptTime">Time</label>
+                  <input id="apptTime" class="input" type="time" required />
+                </div>
+              </div>
+              <div class="modal__footer">
+                <button type="button" id="apptCancelBtn" class="btn">Cancel</button>
+                <button type="submit" id="apptSaveBtn" class="btn primary"><i class="fa fa-check"></i> Save</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Services -->
+        <section id="section-services" class="section">
+          <h2>Services</h2>
+          <div class="controls">
+            <select id="serviceCategoryFilter" class="input">
+              <option value="">All Categories</option>
+              <option value="Grooming">Grooming</option>
+              <option value="DayCare">DayCare</option>
+              <option value="Boarding">Boarding</option>
+            </select>
+            <select id="serviceSpeciesFilter" class="input">
+              <option value="">All Pets</option>
+              <option value="dog">Dog</option>
+              <option value="cat">Cat</option>
+            </select>
+            <button id="addServiceBtn" class="btn primary"><i class="fa fa-plus"></i> Add Service</button>
+          </div>
+          <table class="table">
+            <thead>
+              <tr><th>Name</th><th>Category</th><th>Pet Type</th><th>Price</th><th>Actions</th></tr>
+            </thead>
+            <tbody id="servicesTbody"></tbody>
+          </table>
+        </section>
+
+        <!-- Service Modal -->
+        <div id="serviceModal" class="modal" aria-hidden="true">
+          <div class="modal__dialog">
+            <div class="modal__header">
+              <h3 id="serviceModalTitle">Add Service</h3>
+              <button id="serviceModalClose" class="icon-btn" aria-label="Close"><i class="fa fa-xmark"></i></button>
+            </div>
+            <form id="serviceForm" class="modal__body">
+              <input type="hidden" id="serviceId" />
+              <div class="grid2">
+                <div>
+                  <label for="serviceName">Name</label>
+                  <input id="serviceName" class="input" type="text" required />
+                </div>
+                <div>
+                  <label for="serviceCategory">Category</label>
+                  <select id="serviceCategory" class="input" required>
+                    <option value="Grooming">Grooming</option>
+                    <option value="DayCare">DayCare</option>
+                    <option value="Boarding">Boarding</option>
+                  </select>
+                </div>
+              </div>
+              <!-- Category-specific controls -->
+              <div id="serviceDaycareRow" class="grid2" style="display:none;">
+                <div>
+                  <label for="serviceDaycareType">DayCare Type</label>
+                  <select id="serviceDaycareType" class="input">
+                    <option value="HalfDay">Half Day</option>
+                    <option value="FullDay">Full Day</option>
+                  </select>
+                </div>
+                <div>
+                  <small id="serviceDaycareHours" class="muted">Half Day: 10am–7pm or 5pm–10pm (same price). Full Day: 10am–10pm.</small>
+                </div>
+              </div>
+              <div id="serviceDaycarePrices" class="grid2" style="display:none;">
+                <div>
+                  <label for="serviceDaycarePriceHalf">DayCare Price - Half Day (RM)</label>
+                  <input id="serviceDaycarePriceHalf" class="input" type="number" step="0.01" min="0" placeholder="e.g. 30.00" />
+                </div>
+                <div>
+                  <label for="serviceDaycarePriceFull">DayCare Price - Full Day (RM)</label>
+                  <input id="serviceDaycarePriceFull" class="input" type="number" step="0.01" min="0" placeholder="e.g. 50.00" />
+                </div>
+              </div>
+              <div id="serviceBoardingRow" class="grid2" style="display:none;">
+                <div>
+                  <label for="serviceBoardingPackage">Boarding Package</label>
+                  <select id="serviceBoardingPackage" class="input">
+                    <option value="3-Days">3-Days</option>
+                    <option value="5-Days">5-Days</option>
+                    <option value="7+-Days">7+ Days</option>
+                  </select>
+                </div>
+                <div></div>
+              </div>
+              <div id="serviceBoardingPrices" class="grid2" style="display:none;">
+                <div>
+                  <label for="serviceBoardingPricePerNight">Price per Night (RM)</label>
+                  <input id="serviceBoardingPricePerNight" class="input" type="number" step="0.01" min="0" placeholder="e.g. 60.00" />
+                </div>
+                <div>
+                  <label for="serviceBoardingTotalPrice">Total Price (auto)</label>
+                  <input id="serviceBoardingTotalPrice" class="input" type="number" step="0.01" min="0" readonly />
+                </div>
+              </div>
+              <div class="grid2">
+                <div>
+                  <label for="serviceSpecies">Pet Type</label>
+                  <select id="serviceSpecies" class="input" required>
+                    <option value="dog">Dog</option>
+                    <option value="cat">Cat</option>
+                  </select>
+                </div>
+                <div id="serviceBasePriceRow">
+                  <label for="servicePrice">Price (RM)</label>
+                  <input id="servicePrice" class="input" type="number" step="0.01" min="0" required />
+                </div>
+              </div>
+              <div id="serviceDogTierRow" class="grid2">
+                <div>
+                  <label for="servicePriceSmall">Dog Price - Small (RM)</label>
+                  <input id="servicePriceSmall" class="input" type="number" step="0.01" min="0" placeholder="e.g. 45.00" />
+                </div>
+                <div>
+                  <label for="servicePriceMedium">Dog Price - Medium (RM)</label>
+                  <input id="servicePriceMedium" class="input" type="number" step="0.01" min="0" placeholder="e.g. 55.00" />
+                </div>
+              </div>
+              <div id="serviceDogTierRow2" class="grid2">
+                <div>
+                  <label for="servicePriceLarge">Dog Price - Large (RM)</label>
+                  <input id="servicePriceLarge" class="input" type="number" step="0.01" min="0" placeholder="e.g. 70.00" />
+                </div>
+                <div>
+                  <small class="muted">If Species is Dog and size prices are filled, table will show the minimum (From) price.</small>
+                </div>
+              </div>
+              <div id="serviceDurationRow" class="grid2">
+                <div>
+                  <label for="serviceDuration">Duration (mins)</label>
+                  <input id="serviceDuration" class="input" type="number" step="1" min="0" />
+                </div>
+                <div></div>
+              </div>
+              <div>
+                <label for="serviceDesc">Description</label>
+                <textarea id="serviceDesc" class="input" rows="3" placeholder="Optional"></textarea>
+              </div>
+              <div class="modal__footer">
+                <button type="button" id="serviceCancel" class="btn">Cancel</button>
+                <button type="submit" id="serviceSave" class="btn primary"><i class="fa fa-check"></i> Save</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Payments -->
+        <section id="section-payments" class="section">
+          <h2>Payments</h2>
+          <div class="controls">
+            <select id="payFilter" class="input">
+              <option value="">All</option>
+              <option value="paid">Paid</option>
+              <option value="pending">Pending</option>
+              <option value="refunded">Refunded</option>
+            </select>
+          </div>
+          <table class="table">
+            <thead>
+              <tr><th>Booking</th><th>User</th><th>Amount</th><th>Status</th><th>Date</th><th>Actions</th></tr>
+            </thead>
+            <tbody id="paymentsTbody"></tbody>
+          </table>
+        </section>
+
+        <!-- Reports -->
+        <section id="section-reports" class="section">
+          <h2>Reports & Analytics</h2>
+          <div class="controls">
+            <input id="reportFrom" class="input" type="date" />
+            <input id="reportTo" class="input" type="date" />
+            <button id="filterReports" class="btn"><i class="fa fa-filter"></i> Filter</button>
+            <button id="exportUsersCsv" class="btn"><i class="fa fa-file-csv"></i> Export Users CSV</button>
+            <button id="exportBookings" class="btn"><i class="fa fa-file-csv"></i> Export Bookings CSV</button>
+            <button id="exportPayments" class="btn"><i class="fa fa-file-csv"></i> Export Payments CSV</button>
+          </div>
+          <div class="card"><p class="muted">PDF export placeholder. CSV export available. Use date range to filter bookings and payments.</p></div>
+        </section>
+
+        <!-- Reviews -->
+        <section id="section-reviews" class="section">
+          <h2>Reviews</h2>
+          <div class="controls">
+            <select id="reviewServiceFilter" class="input">
+              <option value="">All Services</option>
+              <option value="Grooming">Grooming</option>
+              <option value="Daycare">Daycare</option>
+              <option value="Boarding">Boarding</option>
+            </select>
+            <select id="reviewRatingFilter" class="input">
+              <option value="">All Ratings</option>
+              <option value="5">5</option>
+              <option value="4">4</option>
+              <option value="3">3</option>
+              <option value="2">2</option>
+              <option value="1">1</option>
+            </select>
+          </div>
+          <table class="table">
+            <thead>
+              <tr><th>User</th><th>Pet</th><th>Service</th><th>Rating</th><th>Comment</th><th>Response</th><th>Actions</th></tr>
+            </thead>
+            <tbody id="reviewsTbody"></tbody>
+          </table>
+        </section>
+
+        <!-- Review Respond Modal -->
+        <div id="reviewModal" class="modal" aria-hidden="true">
+          <div class="modal__dialog">
+            <div class="modal__header">
+              <h3>Respond to Review</h3>
+              <button id="reviewModalClose" class="icon-btn" aria-label="Close"><i class="fa fa-xmark"></i></button>
+            </div>
+            <form id="reviewForm" class="modal__body">
+              <input type="hidden" id="reviewId" />
+              <div>
+                <label for="reviewResponse">Your Response</label>
+                <textarea id="reviewResponse" class="input" rows="4" required></textarea>
+              </div>
+              <div class="modal__footer">
+                <button type="button" id="reviewCancel" class="btn">Cancel</button>
+                <button type="submit" id="reviewSave" class="btn primary"><i class="fa fa-paper-plane"></i> Send</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Content -->
+        <section id="section-content" class="section">
+          <h2>Content Management</h2>
+          <div class="card">
+            <h3>FAQs</h3>
+            <textarea id="contentFaqs" class="input" rows="6" placeholder="Enter FAQs as markdown or text..."></textarea>
+            <div class="modal__footer"><button id="saveFaqs" class="btn primary"><i class="fa fa-save"></i> Save FAQs</button> <span id="dirtyFaqs" class="badge" style="display:none;">Unsaved</span></div>
+          </div>
+          <div class="card">
+            <h3>Terms of Service</h3>
+            <textarea id="contentTerms" class="input" rows="6" placeholder="Edit Terms..."></textarea>
+            <div class="modal__footer"><button id="saveTerms" class="btn primary"><i class="fa fa-save"></i> Save Terms</button> <span id="dirtyTerms" class="badge" style="display:none;">Unsaved</span></div>
+          </div>
+          <div class="card">
+            <h3>Privacy Policy</h3>
+            <textarea id="contentPrivacy" class="input" rows="6" placeholder="Edit Privacy Policy..."></textarea>
+            <div class="modal__footer"><button id="savePrivacy" class="btn primary"><i class="fa fa-save"></i> Save Privacy</button> <span id="dirtyPrivacy" class="badge" style="display:none;">Unsaved</span></div>
+          </div>
+          <div class="card">
+            <h3>About</h3>
+            <textarea id="contentAbout" class="input" rows="6" placeholder="Edit About content..."></textarea>
+            <div class="modal__footer"><button id="saveAbout" class="btn primary"><i class="fa fa-save"></i> Save About</button> <span id="dirtyAbout" class="badge" style="display:none;">Unsaved</span></div>
+          </div>
+        </section>
+
+        <!-- Settings -->
+        <section id="section-settings" class="section">
+          <h2>Settings</h2>
+          <div class="card">
+            <h3>Notifications</h3>
+            <div class="grid2">
+              <div>
+                <label><input type="checkbox" id="setEmailReminders" /> Enable Email Reminders</label>
+              </div>
+              <div>
+                <label for="setReminderLead">Reminder Lead Time (hours)</label>
+                <input id="setReminderLead" class="input" type="number" min="1" step="1" placeholder="24" />
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <h3>Localization</h3>
+            <div class="grid2">
+              <div>
+                <label for="setLanguage">Language</label>
+                <select id="setLanguage" class="input">
+                  <option value="en">English</option>
+                  <option value="ms">Bahasa Melayu</option>
+                </select>
+              </div>
+              <div>
+                <label for="setTimezone">Time Zone</label>
+                <input id="setTimezone" class="input" type="text" placeholder="e.g. Asia/Kuala_Lumpur" />
+              </div>
+            </div>
+            <div class="modal__footer">
+              <button id="saveSettings" class="btn primary"><i class="fa fa-save"></i> Save Settings</button> <span id="dirtySettings" class="badge" style="display:none;">Unsaved</span>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <!-- Toasts Root -->
+  <div id="toastRoot" class="toasts" aria-live="polite" aria-atomic="true"></div>
+
+  <!-- User Detail Modal -->
+  <div id="userModal" class="modal" aria-hidden="true">
+    <div class="modal__dialog">
+      <div class="modal__header">
+        <h3 id="userModalTitle">User Details</h3>
+        <button id="userModalClose" class="icon-btn" aria-label="Close"><i class="fa fa-xmark"></i></button>
+      </div>
+      <div class="modal__body">
+        <div class="grid2">
+          <div>
+            <label>Name</label>
+            <div id="userNameVal" class="badge"></div>
+          </div>
+          <div>
+            <label>Email</label>
+            <div id="userEmailVal" class="badge"></div>
+          </div>
+        </div>
+        <div class="grid2">
+          <div>
+            <label>Phone</label>
+            <div id="userPhoneVal" class="badge"></div>
+          </div>
+          <div>
+            <label>Status</label>
+            <div id="userStatusVal" class="badge"></div>
+          </div>
+        </div>
+        <div class="grid2">
+          <div>
+            <label>Role</label>
+            <div id="userRoleVal" class="badge"></div>
+          </div>
+          <div>
+            <label>Created</label>
+            <div id="userCreatedVal" class="badge"></div>
+          </div>
+        </div>
+      </div>
+      <div class="modal__footer">
+        <button id="userCloseBtn" class="btn">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="./js/admin.js"></script>
+</body>
+</html>

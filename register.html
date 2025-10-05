@@ -6,8 +6,12 @@
     <title>Create Account - PawfectCare</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.3/dist/sweetalert2.min.css" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/pages/register.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.3/dist/sweetalert2.all.min.js"></script>
+    
     
 </head>
 <body>
@@ -42,16 +46,16 @@
                 <h1>Create an Account</h1>
                 <p style="text-align: center; margin-bottom: 1.5rem; color: #666;">Join our community of pet lovers today!</p>
                 
-                <button class="btn btn-google">
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" alt="Google" style="width: 20px;">
-                    Sign up with Google
+                <button type="button" id="googleSignUp" class="btn btn-google w-100">
+                    <img src="/images/Google_logo.png" alt="Google" style="width: 20px; margin-right: 10px;">Sign up with Google
+                    <span class="spinner-border spinner-border-sm d-none ms-2" role="status" aria-hidden="true"></span>
                 </button>
                 
                 <div class="divider">
                     <span>or sign up with email</span>
                 </div>
                 
-                <form id="registerForm">
+                <form id="registerForm" class="auth-form-fields" novalidate>
                     <div id="errorContainer" class="error-message" style="display: none; margin-bottom: 1.5rem;"></div>
                     
                     <div class="form-group">
@@ -76,8 +80,11 @@
                         <label for="password">Password</label>
                         <input type="password" id="password" name="password" class="form-control" placeholder="Create a strong password" required>
                         <div class="error-message"></div>
-                        <div class="password-strength">
-                            <div class="strength-bar" id="strengthBar"></div>
+                        <div class="password-strength mt-2">
+                            <div class="progress" style="height: 5px;">
+                                <div id="password-strength" class="progress-bar" role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                            <small id="password-strength-text" class="form-text text-muted"></small>
                         </div>
                         <div class="password-requirements">
                             <div class="requirement" id="length">
@@ -110,13 +117,12 @@
                         <div class="error-message"></div>
                     </div>
                     
-                    
-                    <button type="submit" class="btn btn-primary" id="submitBtn">
-                        <span class="btn-text">Create Account</span>
-                        <span class="btn-loading" style="display: none;">
-                            <i class="fas fa-spinner fa-spin"></i> Creating account...
-                        </span>
-                    </button>
+                    <div class="form-group">
+                        <button type="submit" class="btn btn-primary btn-block" id="registerBtn">
+                            <span class="button-text">Create Account</span>
+                            <span class="spinner-border spinner-border-sm d-none ms-2" role="status" aria-hidden="true"></span>
+                        </button>
+                    </div>
                     
                     <div class="terms">
                         By creating an account, you agree to our terms and conditions.
@@ -129,13 +135,197 @@
             </div>
         </div>
     </div>
-
-    <!-- Load Font Awesome for loading spinner -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- Main JavaScript -->
-    <script src="js/main.js" type="module"></script>
-    <script src="js/register.js" type="module"></script>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <link rel="icon" href="data:;base64,=">
+    
+    <!-- Firebase Config -->
+    <script type="module" src="js/firebase-config.js"></script>
+    <script type="module" src="js/auth-utils.js"></script>
+    <script type="module" src="js/script.js"></script>
+    <script type="module" src="js/register.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const passwordInput = document.getElementById('password');
+            const confirmPasswordInput = document.getElementById('confirmPassword');
+            const strengthBar = document.getElementById('password-strength');
+            const requirements = {
+                length: document.getElementById('length'),
+                uppercase: document.getElementById('uppercase'),
+                number: document.getElementById('number'),
+                special: document.getElementById('special')
+            };
+            const submitBtn = document.getElementById('registerBtn');
+            const passwordMatch = document.getElementById('passwordMatch');
+            const form = document.getElementById('registerForm');
+            
+            // Password strength checker
+            passwordInput.addEventListener('input', function() {
+                const password = this.value;
+                let strength = 0;
+                
+                // Check length
+                if (password.length >= 8) {
+                    requirements.length.classList.add('requirement-met');
+                    strength += 25;
+                } else {
+                    requirements.length.classList.remove('requirement-met');
+                }
+                
+                // Check uppercase
+                if (/[A-Z]/.test(password)) {
+                    requirements.uppercase.classList.add('requirement-met');
+                    strength += 25;
+                } else {
+                    requirements.uppercase.classList.remove('requirement-met');
+                }
+                
+                // Check number
+                if (/[0-9]/.test(password)) {
+                    requirements.number.classList.add('requirement-met');
+                    strength += 25;
+                } else {
+                    requirements.number.classList.remove('requirement-met');
+                }
+                
+                // Check special character
+                if (/[^A-Za-z0-9]/.test(password)) {
+                    requirements.special.classList.add('requirement-met');
+                    strength += 25;
+                } else {
+                    requirements.special.classList.remove('requirement-met');
+                }
+                
+                // Update strength bar
+                strengthBar.style.width = strength + '%';
+                
+                // Update strength bar color
+                if (strength < 50) {
+                    strengthBar.className = 'progress-bar progress-bar-striped progress-bar-animated bg-danger';
+                } else if (strength < 75) {
+                    strengthBar.className = 'progress-bar progress-bar-striped progress-bar-animated bg-warning';
+                } else {
+                    strengthBar.className = 'progress-bar progress-bar-striped progress-bar-animated bg-success';
+                }
+                
+                checkFormValidity();
+            });
+            
+            // Confirm password match
+            confirmPasswordInput.addEventListener('input', function() {
+                if (this.value !== passwordInput.value) {
+                    this.setCustomValidity("Passwords do not match");
+                } else {
+                    this.setCustomValidity("");
+                }
+                checkFormValidity();
+            });
+            
+            // Check form validity
+            function checkFormValidity() {
+                const termsChecked = document.getElementById('terms').checked;
+                const passwordsMatch = passwordInput.value === confirmPasswordInput.value;
+                const passwordValid = passwordInput.value.length >= 8 && 
+                                    /[A-Z]/.test(passwordInput.value) && 
+                                    /[0-9]/.test(passwordInput.value) && 
+                                    /[^A-Za-z0-9]/.test(passwordInput.value);
+                
+                submitBtn.disabled = !(form.checkValidity() && termsChecked && passwordsMatch && passwordValid);
+            }
+            
+            // Add event listeners for form validation
+            const formInputs = form.querySelectorAll('input');
+            formInputs.forEach(input => {
+                input.addEventListener('input', checkFormValidity);
+            });
+            
+            // Handle form submission
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const name = document.getElementById('fullName').value.trim();
+                const email = document.getElementById('email').value.trim();
+                const phone = document.getElementById('phone').value.trim();
+                const password = passwordInput.value;
+                
+                // Show loading state
+                const submitBtnText = submitBtn.querySelector('.button-text');
+                const submitBtnSpinner = submitBtn.querySelector('.spinner-border');
+                
+                submitBtn.disabled = true;
+                submitBtnText.textContent = 'Creating Account...';
+                if (submitBtnSpinner) submitBtnSpinner.classList.remove('d-none');
+                
+                try {
+                    // Import Firebase functions
+                    const { 
+                        signUpWithEmail, 
+                        auth, 
+                        database, 
+                        ref, 
+                        set, 
+                        sendEmailVerification 
+                    } = await import('./js/firebase-config.js');
+                    
+                    // Register user with Firebase
+                    const result = await signUpWithEmail(email, password, {
+                        name: name,
+                        phone: phone
+                    });
+                    
+                    if (result.success) {
+                        // Show success message
+                        const successMessage = result.warning ? 
+                            'Account created! ' + result.warning : 
+                            'Registration successful! A verification email has been sent to your email address. Please verify your email to continue.';
+                        
+                        await Swal.fire({
+                            title: result.warning ? 'Account Created' : 'Registration Successful!',
+                            text: successMessage,
+                            icon: result.warning ? 'warning' : 'success',
+                            confirmButtonText: 'OK',
+                            confirmButtonColor: '#4361ee'
+                        });
+                        
+                        // Redirect to verification page or login page
+                        window.location.href = result.warning ? 'login.html' : 'verify-email.html';
+                    } else {
+                        throw new Error(error || 'Failed to create account');
+                    }
+                } catch (error) {
+                    console.error('Registration error:', error);
+                    
+                    let errorMessage = 'An error occurred during registration. Please try again.';
+                    if (error.code === 'auth/email-already-in-use') {
+                        errorMessage = 'This email is already registered. Please use a different email or sign in.';
+                    } else if (error.code === 'auth/weak-password') {
+                        errorMessage = 'Password is too weak. Please choose a stronger password.';
+                    } else if (error.code === 'auth/invalid-email') {
+                        errorMessage = 'Please enter a valid email address.';
+                    }
+                    
+                    Swal.fire({
+                        title: 'Registration Failed',
+                        text: errorMessage,
+                        icon: 'error',
+                        confirmButtonText: 'OK',
+                        confirmButtonColor: '#dc3545'
+                    });
+                } finally {
+                    // Reset button state
+                    submitBtn.disabled = false;
+                    submitBtnText.textContent = 'Create Account';
+                    if (submitBtnSpinner) submitBtnSpinner.classList.add('d-none');
+                }
+            });
+            
+            // Initialize form validation
+            checkFormValidity();
+        });
+    </script>
     
     
 </body>

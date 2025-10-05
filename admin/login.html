@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Login - SnugglePaw</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root { --primary:#2ec4b6; --dark:#2c3e50; --muted:#7f8c8d; }
+    *{ box-sizing: border-box; }
+    body{ margin:0; font-family: 'Poppins', sans-serif; background: #f5f7fb; color: var(--dark); }
+    .container{ min-height:100vh; display:grid; place-items:center; padding:24px; }
+    .card{ width:100%; max-width:420px; background:#fff; border-radius:16px; box-shadow:0 10px 30px rgba(0,0,0,.08); padding:28px; }
+    .logo{ display:flex; align-items:center; gap:10px; font-weight:700; font-size:22px; color:var(--dark); text-decoration:none; margin-bottom:8px; }
+    .logo span{ color: var(--primary); }
+    h1{ font-size:22px; margin:8px 0 4px; }
+    p.sub{ margin:0 0 22px; color: var(--muted); font-size: 14px; }
+    label{ display:block; font-size:13px; margin:12px 0 6px; color:#6b7a8f; }
+    input{ width:100%; padding:12px 14px; border:1px solid #e6ebf2; border-radius:10px; outline:none; font-size:14px; }
+    input:focus{ border-color: var(--primary); box-shadow: 0 0 0 3px rgba(46,196,182,.15); }
+    .btn{ width:100%; padding:12px 16px; background:var(--primary); color:#fff; border:none; border-radius:12px; font-weight:600; cursor:pointer; margin-top:16px; }
+    .btn:disabled{ opacity:.6; cursor:not-allowed; }
+    .muted{ color:var(--muted); font-size: 12px; margin-top:12px; }
+    .alert{ display:none; margin-top:12px; padding:10px 12px; border-radius:10px; font-size:13px; }
+    .alert.error{ display:block; background:#fde8e8; color:#c0392b; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <a class="logo" href="../index.html">Snuggle<span>Paw</span> Admin</a>
+      <h1>Sign in</h1>
+      <p class="sub">Admin access only. Use your admin email and password.</p>
+
+      <form id="loginForm">
+        <label for="email">Email</label>
+        <input id="email" type="email" placeholder="admin@SnugglePaw.com" required />
+
+        <label for="password">Password</label>
+        <input id="password" type="password" placeholder="•••••••" required />
+
+        <button id="submitBtn" class="btn" type="submit">
+          <i class="fa fa-right-to-bracket"></i> Sign In
+        </button>
+        <div id="errorBox" class="alert error"></div>
+        <p class="muted"><i class="fa fa-shield"></i> Protected area. Unauthorized access prohibited.</p>
+      </form>
+    </div>
+  </div>
+
+  <script type="module">
+    import { signInAdmin } from "../js/firebase-config.js";
+
+    const form = document.getElementById('loginForm');
+    const emailEl = document.getElementById('email');
+    const passwordEl = document.getElementById('password');
+    const submitBtn = document.getElementById('submitBtn');
+    const errorBox = document.getElementById('errorBox');
+
+    function showError(msg){ errorBox.textContent = msg; errorBox.classList.add('error'); errorBox.style.display = 'block'; }
+
+    function isAdminRole(role){ return String(role||'').toLowerCase() === 'admin' || String(role||'').toLowerCase() === 'superadmin'; }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      errorBox.style.display = 'none';
+      submitBtn.disabled = true; submitBtn.textContent = 'Signing in...';
+      try {
+        const res = await signInAdmin(emailEl.value.trim(), passwordEl.value);
+        if (!res?.success) throw new Error(res?.error || 'Unable to login');
+        window.location.href = './index.html';
+      } catch (err) {
+        console.error(err);
+        showError(err.message || 'Unable to login.');
+      } finally {
+        submitBtn.disabled = false; submitBtn.textContent = 'Sign In';
+      }
+    });
+  </script>
+</body>
+</html>

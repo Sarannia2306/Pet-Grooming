@@ -1,0 +1,73 @@
+/* Add Pet Page Styles */
+.add-pet-page {
+  padding: 90px 0 80px; /* extra top space to clear navbar */
+}
+
+/* Cards */
+.add-pet-card {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 8px 30px rgba(0,0,0,.06);
+  padding: 1.75rem;
+}
+.add-pet-card .card-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 .75rem 0;
+}
+.add-pet-card .card-title-underline {
+  width: 64px; height: 4px; border-radius: 2px;
+  background: #2ec4b6;
+  margin: .25rem 0 1rem 0;
+}
+
+/* Grid */
+.add-pet-grid { display: grid; grid-template-columns: 1.1fr .9fr; gap: 2rem; }
+@media (max-width: 992px) { .add-pet-grid { grid-template-columns: 1fr; } }
+
+/* Form */
+.add-pet-form .form-group { margin-bottom: 1rem; }
+.add-pet-form label { display:block; font-weight:600; color:#334155; margin-bottom:.4rem; }
+.add-pet-form .required { color:#ef4444; }
+.add-pet-form .form-row { display:grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+@media (max-width: 768px) { .add-pet-form .form-row { grid-template-columns:1fr; } }
+
+.input-with-icon { position: relative; }
+.input-with-icon i { position:absolute; left:.85rem; top:50%; transform:translateY(-50%); color:#94a3b8; }
+.input-with-icon .form-control { padding-left: 2.4rem; }
+
+.form-control {
+  width:100%; background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px;
+  padding:.8rem .9rem; font-family: 'Poppins',sans-serif; font-size:14px; transition:.15s ease;
+}
+.form-control:focus { outline:none; border-color:#2ec4b6; box-shadow:0 0 0 4px rgba(46,196,182,.12); background:#fff; }
+.form-control::placeholder { color:#9aa4b2; }
+.input-suffix { position:absolute; right:.75rem; top:50%; transform:translateY(-50%); color:#94a3b8; font-size:.85rem; }
+
+/* Radio buttons as pills */
+.radio-group { display:flex; gap:.75rem; }
+.radio-input { display:none; }
+.radio-option { flex:1; padding:.9rem; border:2px solid #e2e8f0; border-radius:12px; text-align:center; cursor:pointer; transition:.15s; background:#fff; }
+.radio-option i { display:block; font-size:1.25rem; color:#2ec4b6; margin-bottom:.25rem; }
+.radio-option:hover { border-color:#2ec4b6; background: #f0fdfa; }
+.radio-input:checked + .radio-option { border-color:#2ec4b6; background:#e6fffb; box-shadow:0 4px 16px rgba(46,196,182,.15); }
+
+/* Photo upload + AI */
+.ai-upload { border:2px dashed #e2e8f0; border-radius:14px; padding:2rem; text-align:center; transition:.15s; }
+.ai-upload:hover { border-color:#2ec4b6; background: #f8fffe; }
+.ai-upload .icon { font-size:2rem; color:#2ec4b6; margin-bottom:.5rem; }
+.photo-preview { margin-top: .30rem; display:flex; justify-content:center; }
+.photo-preview img { max-width:50%; border-radius:12px; box-shadow:0 10px 24px rgba(0,0,0,.08); }
+
+/* Actions */
+.form-actions { display:flex; justify-content:flex-end; gap:.75rem; margin-top:1.25rem; padding-top:1rem; border-top:1px solid #e2e8f0; }
+.btn { display:inline-flex; align-items:center; gap:.5rem; padding:.7rem 1.2rem; border-radius:10px; font-weight:600; cursor:pointer; border:1px solid transparent; text-decoration:none; }
+.btn-primary { background:#2ec4b6; color:#fff; }
+.btn-primary:hover { filter: brightness(0.95); }
+.btn-outline { background:transparent; border-color:#2ec4b6; color:#2ec4b6; }
+.btn-outline:hover { background:rgba(46,196,182,.08); }
+
+/* Headings */
+.add-pet-heading { font-size:1.9rem; font-weight:700; color:#0f172a; margin:0; }
+.add-pet-subtext { color:#64748b; margin-top:.5rem; }

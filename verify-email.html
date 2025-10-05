@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify Your Email - PawfectCare</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .verification-container {
+            max-width: 500px;
+            margin: 100px auto;
+            padding: 2rem;
+            text-align: center;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+        }
+        .verification-icon {
+            font-size: 4rem;
+            color: #4CAF50;
+            margin-bottom: 1.5rem;
+        }
+        .verification-message {
+            margin-bottom: 2rem;
+        }
+        .btn-verify {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 0.8rem 2rem;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background-color 0.3s;
+        }
+        .btn-verify:hover {
+            background-color: #45a049;
+        }
+        .loading {
+            display: none;
+            margin-top: 1rem;
+        }
+        .error-message {
+            color: #e74c3c;
+            margin-top: 1rem;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="verification-container">
+        <div class="verification-icon">
+            <i class="fas fa-envelope-open-text"></i>
+        </div>
+        <h1>Verify Your Email</h1>
+        <p class="verification-message">
+            We've sent a verification link to your email address. Please check your inbox and click on the link to verify your email.
+        </p>
+        <p>Didn't receive the email? <a href="#" id="resendLink">Resend verification email</a></p>
+        
+        <div class="loading" id="loadingSpinner">
+            <i class="fas fa-spinner fa-spin"></i> Processing...
+        </div>
+        
+        <div class="error-message" id="errorMessage"></div>
+        
+        <div style="margin-top: 2rem;">
+            <a href="login.html" class="btn-verify">Back to Login</a>
+        </div>
+    </div>
+
+    <!-- Firebase and Auth Scripts -->
+    <script type="module">
+        import { auth, database, ref, update, sendEmailVerification } from './js/firebase-config.js';
+        import { showAlert } from './js/auth-utils.js';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const resendLink = document.getElementById('resendLink');
+            const loadingSpinner = document.getElementById('loadingSpinner');
+            const errorMessage = document.getElementById('errorMessage');
+
+            // Check if user is logged in
+            auth.onAuthStateChanged(async (user) => {
+                if (!user) {
+                    window.location.href = 'login.html';
+                } else if (user.emailVerified) {
+                    // Update email verification status in database
+                    try {
+                        const userRef = ref(database, 'users/' + user.uid);
+                        await update(userRef, { 
+                            emailVerified: true,
+                            lastVerified: new Date().toISOString()
+                        });
+                        window.location.href = 'dashboard.html';
+                    } catch (error) {
+                        console.error('Error updating verification status:', error);
+                        showAlert('Email verified but failed to update profile. Please refresh the page.', 'warning');
+                    }
+                }
+            });
+
+            // Handle resend verification email
+            if (resendLink) {
+                resendLink.addEventListener('click', async (e) => {
+                    e.preventDefault();
+                    
+                    const user = auth.currentUser;
+                    if (!user) {
+                        window.location.href = 'login.html';
+                        return;
+                    }
+
+                    try {
+                        // Show loading state
+                        loadingSpinner.style.display = 'block';
+                        errorMessage.style.display = 'none';
+                        
+                        // Send verification email
+                        await sendEmailVerification(user);
+                        
+                        // Show success message
+                        showAlert('Verification email sent successfully!', 'success');
+                    } catch (error) {
+                        console.error('Error sending verification email:', error);
+                        errorMessage.textContent = error.message || 'Failed to send verification email. Please try again.';
+                        errorMessage.style.display = 'block';
+                    } finally {
+                        loadingSpinner.style.display = 'none';
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>

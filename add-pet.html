@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Pet - SnugglePaw</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/pages/add-pet.css?v=1">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container">
+            <a href="index.html" class="logo">Snuggle<span>Paw</span></a>
+            <div class="nav-links">
+                <a href="index.html">Home</a>
+                <a href="services.html">Services</a>
+                <a href="booking.html">Book Now</a>
+                <a href="about.html">About Us</a>
+                <a href="contact.html">Contact</a>
+                <div class="auth-buttons">
+                    <a href="dashboard.html" class="btn btn-outline">
+                        <i class="fas fa-user"></i> Dashboard
+                    </a>
+                    <a href="#" id="logoutBtn" class="btn btn-outline">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </a>
+                </div>
+            </div>
+            <button class="hamburger">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Add Pet Page -->
+    <section class="add-pet-page">
+        <div class="container">
+            <div class="add-pet-grid">
+                <!-- Add Pet Form Card -->
+                <div class="add-pet-card add-pet-form">
+                    <h2 class="card-title add-pet-heading">Pet Details</h2>
+                    <div class="card-title-underline"></div>
+                    <form id="addPetForm">
+                    <!-- Pet Name -->
+                    <div class="form-group">
+                        <label for="petName">Pet Name <span class="required">*</span></label>
+                        <div class="input-with-icon">
+                            <i class="fas fa-paw"></i>
+                            <input type="text" id="petName" name="petName" class="form-control" placeholder="Enter pet's name" required>
+                        </div>
+                    </div>
+
+                    <!-- Pet Type -->
+                    <div class="form-group">
+                        <label>Pet Type <span class="required">*</span></label>
+                        <div class="radio-group" id="petTypeGroup">
+                            <input type="radio" name="type" id="typeDog" value="dog" class="radio-input type" checked>
+                            <label for="typeDog" class="radio-option">
+                                <i class="fas fa-dog"></i>
+                                <span>Dog</span>
+                            </label>
+                            <input type="radio" name="type" id="typeCat" value="cat" class="radio-input type">
+                            <label for="typeCat" class="radio-option">
+                                <i class="fas fa-cat"></i>
+                                <span>Cat</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Breed -->
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="petBreed">Breed <span class="required">*</span></label>
+                            <div class="input-with-icon">
+                                <i class="fas fa-dna"></i>
+                                <input type="text" id="petBreed" name="petBreed" class="form-control" placeholder="Select or type breed" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="petSize">Size <span class="required">*</span></label>
+                            <div class="input-with-icon">
+                                <i class="fas fa-arrows-alt-v"></i>
+                                <select id="petSize" name="petSize" class="form-control" required>
+                                    <option value="" disabled selected>Select size</option>
+                                    <option value="small">Small</option>
+                                    <option value="medium">Medium</option>
+                                    <option value="large">Large</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Age and Weight -->
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="petAge">Age <span class="required">*</span></label>
+                            <div class="input-with-icon">
+                                <i class="far fa-calendar-alt"></i>
+                                <input type="number" id="petAge" name="petAge" class="form-control" placeholder="e.g. 2" min="0" max="30" step="0.5" required>
+                                <span class="input-suffix">years</span>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="petWeight">Weight</label>
+                            <div class="input-with-icon">
+                                <i class="fas fa-weight"></i>
+                                <input type="number" id="petWeight" name="petWeight" class="form-control" placeholder="e.g. 5.5" min="0.1" step="0.1">
+                                <span class="input-suffix">kg</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Gender -->
+                    <div class="form-group">
+                        <label>Gender <span class="required">*</span></label>
+                        <div class="radio-group">
+                            <input type="radio" name="petGender" id="genderMale" value="male" class="radio-input" required>
+                            <label for="genderMale" class="radio-option">
+                                <i class="fas fa-mars"></i>
+                                <span>Male</span>
+                            </label>
+                            <input type="radio" name="petGender" id="genderFemale" value="female" class="radio-input">
+                            <label for="genderFemale" class="radio-option">
+                                <i class="fas fa-venus"></i>
+                                <span>Female</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Color -->
+                    <div class="form-group">
+                        <label for="petColor">Color</label>
+                        <div class="input-with-icon">
+                            <i class="fas fa-palette"></i>
+                            <input type="text" id="petColor" name="petColor" class="form-control" placeholder="e.g. Black & White">
+                        </div>
+                    </div>
+
+                    <!-- Pet Photo -->
+                    <div class="form-group">
+                        <label>Pet Photo</label>
+                        <div class="ai-upload" id="aiUploadBox">
+                            <div class="upload-content" id="petPhotoUpload">
+                                <i class="fas fa-cloud-upload-alt icon"></i>
+                                <p>Click or drag & drop a photo</p>
+                                <input type="file" id="aiPetImage" accept="image/*" style="display: none;">
+                            </div>
+                        </div>
+                        <div id="photoPreview" class="photo-preview">
+                            <img id="petImage" src="#" alt="Pet Preview" style="display: none;">
+                        </div>
+                    </div>
+
+                    <!-- Color moved above Pet Photo -->
+
+                    <!-- Special Notes -->
+                    <div class="form-group">
+                        <label for="petNotes">Special Notes</label>
+                        <textarea id="petNotes" name="petNotes" class="form-control" rows="3" placeholder="Any special care instructions or notes about your pet"></textarea>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-outline" onclick="window.history.back()">Cancel</button>
+                        <button type="submit" class="btn btn-primary" id="savePetBtn">
+                            <span class="btn-text">Save Pet</span>
+                        </button>
+                    </div>
+                    </form>
+                </div>
+                
+                <!-- AI Pet Recognition Card -->
+                <div class="add-pet-card">
+                    <h2 class="card-title add-pet-heading">AI Pet Recognition</h2>
+                    <div class="card-title-underline"></div>
+                    <p class="add-pet-subtext">Upload a photo of your pet to help us provide the best possible care.</p>
+                    <div id="aiDropZone" class="ai-upload">
+                        <i class="fas fa-camera icon"></i>
+                        <h3>Upload Pet Photo</h3>
+                        <p>Click or drag & drop an image of your pet</p>
+                        
+                    </div>
+                    
+                    <!-- How AI Helps Section -->
+                    <div class="benefits">
+                        <h4>How AI Helps:</h4>
+                        <ul style="list-style: none; padding: 0; margin:0;">
+                            <li style="margin:.6rem 0; display:flex; align-items:flex-start;"><i class="fas fa-check-circle" style="color:#2ec4b6; margin-right:8px; margin-top:3px;"></i><span>Identifies pet type-specific</span></li>
+                            <li style="margin:.6rem 0; display:flex; align-items:flex-start;"><i class="fas fa-check-circle" style="color:#2ec4b6; margin-right:8px; margin-top:3px;"></i><span>Identifies breed-specific</span></li>
+                            <li style="margin:.6rem 0; display:flex; align-items:flex-start;"><i class="fas fa-check-circle" style="color:#2ec4b6; margin-right:8px; margin-top:3px;"></i><span>Identifies size-specific</span></li>
+                        </ul>
+                    </div>
+
+                    <!-- AI Detected Information (Prediction Results) -->
+                    <div id="aiDetectedInfo" style="display:none;">
+                        <h3>AI Detected Information</h3>
+                        <p id="aiBreed"></p>
+                        <p id="aiAge"></p>
+                        <p id="aiColor"></p>
+                        <div id="aiResult"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-bottom">
+            <p>&copy; 2023 SnugglePaw. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script type="module" src="js/auth-guard.js"></script>
+    <script type="module" src="js/add-pet.js?v=1"></script>
+</body>
+</html>
