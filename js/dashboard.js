@@ -6,16 +6,27 @@
 
 import { auth, database, ref, get, update, signOutUser } from './firebase-config.js';
 import { onValue } from 'https://www.gstatic.com/firebasejs/10.1.0/firebase-database.js';
+import { sendEmailVerification } from 'https://www.gstatic.com/firebasejs/10.1.0/firebase-auth.js';
 import { showAlert, requireAuth } from './auth-utils.js';
 
 // DOM Elements
 const userGreeting = document.getElementById('userGreeting');
 const userEmail = document.getElementById('userEmail');
 const userAvatar = document.getElementById('userAvatar');
-// Removed duplicate declaration of logoutBtn
 
 // Track initialization state
 let isInitialized = false;
+
+/**
+ * Show a content section by id and hide others
+ */
+function showSection(sectionId) {
+    document.querySelectorAll('.content-section').forEach(sec => {
+        sec.classList.remove('active');
+    });
+    const target = document.getElementById(sectionId);
+    if (target) target.classList.add('active');
+}
 
 // Check authentication state and initialize dashboard
 const initDashboard = async () => {
@@ -24,7 +35,7 @@ const initDashboard = async () => {
         console.log('Dashboard already initialized');
         return;
     }
-    
+
     // Check if we're on the login page
     if (window.location.pathname.endsWith('login.html')) {
         console.log('On login page, skipping dashboard init');
@@ -83,8 +94,16 @@ const initDashboard = async () => {
         // Load user data and setup UI
         try {
             await loadUserData(user);
+            // Load other sections data in parallel
+            await Promise.all([
+                loadUserAppointments(user.uid),
+                loadUserInvoices(user.uid),
+                loadUserMessages(user.uid)
+            ]);
             setupEventListeners();
             updateGreeting();
+            // Default to Pets section
+            showSection('pets');
             console.log('Dashboard initialization complete');
         } catch (error) {
             console.error('Error loading user data:', error);
@@ -141,7 +160,7 @@ async function loadUserPets(userId) {
  * @param {Array} pets - Array of pet objects
  */
 function renderPets(pets) {
-    const petsContainer = document.getElementById('petsContainer');
+    const petsContainer = document.getElementById('petsList');
     if (!petsContainer) return;
     
     if (pets.length === 0) {
@@ -184,6 +203,202 @@ function renderPets(pets) {
     `;
     
     petsContainer.innerHTML = petsHTML;
+}
+
+// =====================
+// Appointments / Billing / Messages
+// =====================
+
+/**
+ * Load user's appointments from top-level 'appointments' filtered by userId
+ */
+async function loadUserAppointments(userId) {
+    try {
+        const apptRef = ref(database, 'appointments');
+        const snapshot = await get(apptRef);
+        const items = [];
+        if (snapshot.exists()) {
+            snapshot.forEach(child => {
+                const a = child.val();
+                if (a && a.userId === userId) {
+                    items.push({ id: child.key, ...a });
+                }
+            });
+        }
+        items.sort((a, b) => new Date(`${a.date || ''} ${a.time || ''}`) - new Date(`${b.date || ''} ${b.time || ''}`));
+        renderAppointments(items);
+    } catch (err) {
+        console.error('Error loading appointments:', err);
+    }
+}
+
+function renderAppointments(items) {
+    const container = document.getElementById('appointmentsList');
+    if (!container) return;
+
+    if (!items || items.length === 0) {
+        container.innerHTML = `
+            <div class="no-activity">
+                <i class="fas fa-calendar-times"></i>
+                <p>No appointments found</p>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = items.map(a => `
+        <div class="appointment-item">
+            <div class="appointment-info">
+                <h4>${a.serviceName || 'Grooming Service'}</h4>
+                <div class="appointment-meta">
+                    <span><i class="far fa-calendar"></i>${a.date || ''}</span>
+                    <span><i class="far fa-clock"></i>${a.time || ''}</span>
+                    ${a.petName ? `<span><i class=\"fas fa-paw\"></i>${a.petName}</span>` : ''}
+                    ${a.species ? `<span><i class=\"fas fa-dog\"></i>${a.species}</span>` : ''}
+                    ${a.price != null ? `<span><i class=\"fas fa-dollar-sign\"></i>${a.price}</span>` : ''}
+                </div>
+            </div>
+            <span class="status-badge ${a.status ? `status-${a.status}` : 'status-confirmed'}">${(a.status || 'confirmed')}</span>
+        </div>
+    `).join('');
+}
+
+/**
+ * Load user's invoices under users/{uid}/invoices
+ */
+async function loadUserInvoices(userId) {
+    try {
+        const invRef = ref(database, 'invoices');
+        const snapshot = await get(invRef);
+        const invoices = [];
+        if (snapshot.exists()) {
+            snapshot.forEach(child => {
+                const val = child.val();
+                if (val && val.userId === userId) {
+                    invoices.push({ id: child.key, ...val });
+                }
+            });
+        }
+        invoices.sort((a,b) => new Date(b.date || 0) - new Date(a.date || 0));
+        renderInvoices(invoices);
+    } catch (err) {
+        console.error('Error loading invoices:', err);
+    }
+}
+
+function renderInvoices(invoices) {
+    const container = document.getElementById('invoiceList');
+    if (!container) return;
+    if (!invoices || invoices.length === 0) {
+        container.innerHTML = `
+            <div class="no-activity">
+                <i class="fas fa-file-invoice"></i>
+                <p>No invoices found</p>
+            </div>
+        `;
+        return;
+    }
+    container.innerHTML = invoices.map(inv => `
+        <div class="invoice-card">
+            <div class="invoice-main">
+                <div class="invoice-title">Invoice #${inv.number || inv.id}</div>
+                <div class="invoice-meta">
+                    <span><i class="far fa-calendar"></i>${inv.date || ''}</span>
+                    <span><i class="fas fa-tag"></i>${inv.service || 'Service'}</span>
+                </div>
+            </div>
+            <div class="invoice-amount ${inv.status === 'paid' ? 'paid' : 'due'}">${inv.amount ? `${inv.currency || 'MYR'} ${inv.amount}` : ''}</div>
+            <div class="invoice-status ${inv.status || 'due'}">${(inv.status || 'due').toUpperCase()}</div>
+            ${inv.url ? `<a class=\"btn btn-outline btn-sm\" href=\"${inv.url}\" target=\"_blank\"><i class=\"fas fa-download\"></i> Download</a>` : `<button class=\"btn btn-outline btn-sm download-invoice\" data-invoice-id=\"${inv.id}\"><i class=\"fas fa-download\"></i> Download</button>`}
+        </div>
+    `).join('');
+
+    // Attach listeners for download buttons
+    attachInvoiceDownloadHandlers(invoices);
+}
+
+async function openInvoiceById(invoiceId) {
+    try {
+        const user = auth.currentUser;
+        if (!user) return;
+        const invRef = ref(database, `users/${user.uid}/invoices/${invoiceId}`);
+        const snapshot = await get(invRef);
+        if (!snapshot.exists()) return;
+        const inv = snapshot.val();
+        const html = `<!DOCTYPE html>
+        <html><head><meta charset="utf-8"><title>Invoice ${inv.number || invoiceId}</title>
+        <style>
+        body{font-family: Arial, sans-serif; padding:20px;color:#2c3e50}
+        .header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+        .title{font-size:20px;font-weight:bold}
+        .section{margin-bottom:12px}
+        .row{display:flex;justify-content:space-between;margin:6px 0}
+        .total{font-weight:bold;border-top:1px solid #ddd;padding-top:8px;margin-top:8px}
+        .muted{color:#7f8c8d}
+        </style></head><body>
+        <div class="header"><div class="title">Invoice #${inv.number || invoiceId}</div><div class="muted">${new Date(inv.date || Date.now()).toLocaleString()}</div></div>
+        <div class="section">
+          <div class="row"><span>Service</span><span>${inv.service || '-'}</span></div>
+          <div class="row"><span>Appointment ID</span><span>${inv.appointmentId || '-'}</span></div>
+          <div class="row"><span>Payment ID</span><span>${inv.paymentId || '-'}</span></div>
+        </div>
+        <div class="section">
+          <div class="row"><span>Amount</span><span>${inv.currency || 'MYR'} ${Number(inv.amount || 0).toFixed(2)}</span></div>
+          <div class="row total"><span>Status</span><span>${(inv.status || 'PAID').toString().toUpperCase()}</span></div>
+        </div>
+        <script>window.onload = () => setTimeout(() => window.print(), 300);<\/script>
+        </body></html>`;
+        const w = window.open('', '_blank');
+        if (w) { w.document.open(); w.document.write(html); w.document.close(); }
+    } catch (err) {
+        console.error('Open invoice error', err);
+    }
+}
+
+function attachInvoiceDownloadHandlers(invoices) {
+    const container = document.getElementById('invoiceList');
+    if (!container) return;
+    const buttons = container.querySelectorAll('.download-invoice');
+    buttons.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            const id = btn.getAttribute('data-invoice-id');
+            if (id) openInvoiceById(id);
+        });
+    });
+}
+
+/**
+ * Load user's messages under users/{uid}/messages
+ */
+async function loadUserMessages(userId) {
+    try {
+        const msgRef = ref(database, `users/${userId}/messages`);
+        const snapshot = await get(msgRef);
+        const messages = [];
+        if (snapshot.exists()) {
+            snapshot.forEach(child => messages.push({ id: child.key, ...child.val() }));
+        }
+        renderMessages(messages);
+    } catch (err) {
+        console.error('Error loading messages:', err);
+    }
+}
+
+function renderMessages(messages) {
+    const container = document.getElementById('messagesList');
+    if (!container) return;
+    if (!messages || messages.length === 0) {
+        container.innerHTML = `<div class=\"no-activity\"><i class=\"fas fa-inbox\"></i><p>No messages yet</p></div>`;
+        return;
+    }
+    container.innerHTML = messages.map(m => `
+        <div class=\"message-item\">
+            <div class=\"message-from\"><i class=\"fas fa-user\"></i> ${m.from || 'Support'}</div>
+            <div class=\"message-body\">${m.text || ''}</div>
+            <div class=\"message-time\">${m.date || ''}</div>
+        </div>
+    `).join('');
 }
 
 /**
@@ -275,6 +490,22 @@ function updateUserProfileUI(user, userData) {
         
         // Update verification status
         updateVerificationUI(user);
+        // Prefill settings form if present
+        const nameInput = document.getElementById('settingsName');
+        const emailInput = document.getElementById('settingsEmail');
+        const phoneInput = document.getElementById('settingsPhone');
+        const addressInput = document.getElementById('settingsAddress');
+        const cityInput = document.getElementById('settingsCity');
+        const stateInput = document.getElementById('settingsState');
+        const zipInput = document.getElementById('settingsZip');
+
+        if (nameInput) nameInput.value = userData.name || user.displayName || '';
+        if (emailInput) emailInput.value = user.email || '';
+        if (phoneInput) phoneInput.value = userData.phone || '';
+        if (addressInput) addressInput.value = userData.address || '';
+        if (cityInput) cityInput.value = userData.city || '';
+        if (stateInput) stateInput.value = userData.state || '';
+        if (zipInput) zipInput.value = userData.zip || '';
         
     } catch (error) {
         console.error('Error updating user profile UI:', error);
@@ -369,6 +600,22 @@ function setupEventListeners() {
         });
     }
     
+    // Sidebar section toggles
+    const sidebarLinks = document.querySelectorAll('.sidebar-menu a[data-section]');
+    if (sidebarLinks && sidebarLinks.length) {
+        sidebarLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const section = link.getAttribute('data-section');
+                if (!section) return;
+                // activate
+                sidebarLinks.forEach(l => l.classList.remove('active'));
+                link.classList.add('active');
+                showSection(section);
+            });
+        });
+    }
+
     // Mobile menu toggle
     const hamburger = document.querySelector('.hamburger');
     const navLinks = document.querySelector('.nav-links');
@@ -393,6 +640,64 @@ function setupEventListeners() {
     if (addNewPetCard) {
         addNewPetCard.addEventListener('click', () => {
             window.location.href = 'add-pet.html';
+        });
+    }
+
+    // Settings form submit
+    const settingsForm = document.getElementById('userSettingsForm');
+    if (settingsForm) {
+        settingsForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const user = auth.currentUser;
+            if (!user) return;
+            const statusEl = document.getElementById('settingsStatus');
+            const saveBtn = document.getElementById('saveSettingsBtn');
+            if (statusEl) { statusEl.textContent = ''; statusEl.className = 'form-status'; }
+            if (saveBtn) { saveBtn.disabled = true; saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...'; }
+            const payload = {
+                name: (document.getElementById('settingsName')?.value || '').trim(),
+                phone: (document.getElementById('settingsPhone')?.value || '').trim(),
+                address: (document.getElementById('settingsAddress')?.value || '').trim(),
+                city: (document.getElementById('settingsCity')?.value || '').trim(),
+                state: (document.getElementById('settingsState')?.value || '').trim(),
+                zip: (document.getElementById('settingsZip')?.value || '').trim(),
+                updatedAt: new Date().toISOString(),
+            };
+            try {
+                await update(ref(database, `users/${user.uid}`), payload);
+                showAlert('Profile updated successfully.', 'success');
+                // reflect name in greeting & sidebar
+                const userName = document.getElementById('userName');
+                if (userName && payload.name) userName.textContent = payload.name;
+                const greeting = document.getElementById('userGreeting');
+                if (greeting && payload.name) greeting.textContent = payload.name;
+                if (statusEl) { statusEl.textContent = 'Saved successfully.'; statusEl.className = 'form-status success'; }
+            } catch (err) {
+                console.error('Error saving settings:', err);
+                showAlert('Failed to save settings. Please try again.', 'error');
+                if (statusEl) { statusEl.textContent = 'Failed to save. Please try again.'; statusEl.className = 'form-status error'; }
+            }
+            if (saveBtn) { saveBtn.disabled = false; saveBtn.innerHTML = '<i class="fas fa-save"></i> Save Changes'; }
+        });
+    }
+
+    // Reset password
+    const resetBtn = document.getElementById('resetPasswordBtn');
+    if (resetBtn) {
+        resetBtn.addEventListener('click', async () => {
+            try {
+                const user = auth.currentUser;
+                if (!user || !user.email) {
+                    showAlert('You must be logged in to reset password.', 'error');
+                    return;
+                }
+                const { sendPasswordResetEmail } = await import('https://www.gstatic.com/firebasejs/10.1.0/firebase-auth.js');
+                await sendPasswordResetEmail(auth, user.email);
+                showAlert('Password reset email sent.', 'success');
+            } catch (err) {
+                console.error('Reset password error:', err);
+                showAlert('Failed to send reset email. Please try again later.', 'error');
+            }
         });
     }
 }

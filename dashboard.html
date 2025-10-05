@@ -14,7 +14,7 @@
     <!-- Navigation -->
     <nav class="navbar">
         <div class="container">
-            <a href="index.html" class="logo">Pawfect<span>Care</span></a>
+            <a href="index.html" class="logo">Snuggle<span>Paw</span></a>
             <div class="nav-links">
                 <a href="index.html">Home</a>
                 <a href="services.html">Services</a>
@@ -22,8 +22,8 @@
                 <a href="about.html">About Us</a>
                 <a href="contact.html">Contact</a>
                 <div class="auth-buttons">
-                    <a href="profile.html" class="btn btn-outline">
-                        <i class="fas fa-user"></i> My Profile
+                    <a href="dashboard.html" class="btn btn-outline">
+                        <i class="fas fa-user"></i> Dashboard
                     </a>
                     <a href="#" id="logoutBtn" class="btn btn-outline">
                         <i class="fas fa-sign-out-alt"></i> Logout
@@ -42,22 +42,9 @@
     <section class="dashboard">
         <div class="container">
 
-            <!-- Verification Banner -->
-            <div id="verifyEmailBanner" class="alert alert-warning" style="display: none;">
-                <i class="fas fa-exclamation-circle"></i>
-                Please verify your email address to access all features. 
-                <a href="#" id="resendVerificationEmail" class="alert-link">Resend verification email</a>
-            </div>
-            
             <div class="dashboard-header">
                 <div class="welcome-section">
                     <h1 class="welcome-message">Welcome back, <span id="userGreeting">User</span>!</h1>
-                    <div class="user-meta">
-                        <span class="user-email" id="userEmail">Loading...</span>
-                        <span class="verification-status" id="verificationStatus">
-                            <i class="fas fa-circle-notch fa-spin"></i> Verifying...
-                        </span>
-                    </div>
                 </div>
                 <div class="dashboard-date" id="currentDate"></div>
             </div>
@@ -65,128 +52,167 @@
             <div class="dashboard-grid">
                 <!-- Sidebar -->
                 <aside class="sidebar">
+                    <!-- User profile sidebar -->
+                    <div class="user-profile">
+                        <div class="profile-info">
+                            <h3 id="userName">User</h3>
+                            <p id="userEmail">Loading...</p>
+                            <span class="verification-status" id="verificationStatus">
+                                <i class="fas fa-circle-notch fa-spin"></i> Verifying...
+                            </span>
+                        </div>
+                    </div>
+
                     <ul class="sidebar-menu">
                         <li>
-                            <a href="#" class="active">
-                                <i class="fas fa-home"></i> Dashboard
-                            </a>
-                        </li>
-                        <li>
-                            <a href="appointments.html">
-                                <i class="fas fa-calendar-alt"></i> Appointments
-                            </a>
-                        </li>
-                        <li>
-                            <a href="pets.html">
+                            <a href="#" data-section="pets" class="active">
                                 <i class="fas fa-paw"></i> My Pets
                             </a>
                         </li>
                         <li>
-                            <a href="messages.html">
+                            <a href="#" data-section="appointments">
+                                <i class="fas fa-calendar-alt"></i> Appointments
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#" data-section="billing">
+                                <i class="fas fa-file-invoice-dollar"></i> Bills & Invoice
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#" data-section="messages">
                                 <i class="fas fa-envelope"></i> Messages
-                                <span class="badge" style="margin-left: auto; background: #e74c3c; color: white; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 0.7rem;">3</span>
                             </a>
                         </li>
                         <li>
-                            <a href="payment.html">
-                                <i class="fas fa-credit-card"></i> Payment Methods
-                            </a>
-                        </li>
-                        <li>
-                            <a href="settings.html">
+                            <a href="#" data-section="settings">
                                 <i class="fas fa-cog"></i> Settings
-                            </a>
-                        </li>
-                        <li>
-                            <a href="help-support.html">
-                                <i class="fas fa-question-circle"></i> Help & Support
                             </a>
                         </li>
                     </ul>
                 </aside>
-                
-                <!-- Main Content -->
+
+                <!-- Main Content Sections -->
                 <main class="main-content">
-                    <!-- My Pets -->
-                    <div class="card">
-                        <div class="card-header">
-                            <h2 class="card-title">My Furry Family</h2>
-                            <a href="add-pet.html" class="btn btn-text">
-                                <i class="fas fa-plus"></i> Add Pet
-                            </a>
+                    <!-- Pets Section -->
+                    <div id="pets" class="content-section active">
+                        <div class="section-header">
+                            <h2>My Pets</h2>
+                            <a href="add-pet.html" id="addPetBtn" class="btn btn-primary"><i class="fas fa-plus"></i> Add Pet</a>
                         </div>
-                        <div class="card-body" id="petsContainer">
+                        <div id="petsList" class="pets-grid">
                             <div class="loading-section">
-                                <i class="fas fa-paw fa-spin"></i>
+                                <i class="fas fa-spinner fa-spin"></i>
                                 <p>Loading your pets...</p>
                             </div>
                         </div>
+                    </div>
 
-                        <div style="text-align: right; margin-top: 1rem;">
-                            <a href="pets.html" class="btn btn-outline btn-sm">View All</a>
+                    <!-- Appointments Section -->
+                    <div id="appointments" class="content-section">
+                        <div class="section-header">
+                            <h2>Appointments</h2>
+                            <a href="booking.html" class="btn btn-primary"><i class="fas fa-plus"></i> New Booking</a>
+                        </div>
+                        <div id="appointmentsList" class="appointments-list">
+                            <div class="loading-section">
+                                <i class="fas fa-spinner fa-spin"></i>
+                                <p>Loading appointments...</p>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Upcoming Appointments -->
-                    <div class="card appointments">
-                        <div class="card-header">
-                            <h2 class="card-title">Upcoming Appointments</h2>
-                            <a href="booking.html" class="btn btn-primary">
-                                <i class="fas fa-plus"></i> New Booking
-                            </a>
+                    <!-- Billing & Invoice Section -->
+                    <div id="billing" class="content-section">
+                        <div class="section-header">
+                            <h2>Bills & Invoice</h2>
+                            <a href="booking.html" class="btn btn-outline"><i class="fas fa-credit-card"></i> Make a Payment</a>
                         </div>
-                        
-                        <div class="appointment-list">
-                            <div class="appointment-item">
-                                <div class="appointment-info">
-                                    <h4>Full Grooming Session</h4>
-                                    <div class="appointment-meta">
-                                        <span><i class="far fa-calendar"></i> Oct 15, 2023</span>
-                                        <span><i class="far fa-clock"></i> 10:00 AM - 12:00 PM</span>
-                                        <span><i class="fas fa-paw"></i> Max (Golden Retriever)</span>
-                                    </div>
-                                </div>
-                                <div class="appointment-actions">
-                                    <span class="status-badge status-confirmed">Confirmed</span>
-                                </div>
+                        <div id="invoiceList" class="invoices-grid">
+                            <div class="loading-section">
+                                <i class="fas fa-spinner fa-spin"></i>
+                                <p>Loading invoices...</p>
                             </div>
-                            
-                            <div class="appointment-item">
-                                <div class="appointment-info">
-                                    <h4>Veterinary Checkup</h4>
-                                    <div class="appointment-meta">
-                                        <span><i class="far fa-calendar"></i> Oct 18, 2023</span>
-                                        <span><i class="far fa-clock"></i> 2:30 PM - 3:30 PM</span>
-                                        <span><i class="fas fa-paw"></i> Luna (Siamese Cat)</span>
-                                    </div>
-                                </div>
-                                <div class="appointment-actions">
-                                    <span class="status-badge status-pending">Pending</span>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div style="text-align: right; margin-top: 1rem;">
-                            <a href="appointments.html" class="btn btn-outline btn-sm">View All Appointments</a>
                         </div>
                     </div>
-                    
-                    <!-- Recent Activity -->
-                    <div class="card">
-                        <div class="card-header">
-                            <h2 class="card-title">Recent Activity</h2>
+
+                    <!-- Messages Section -->
+                    <div id="messages" class="content-section">
+                        <div class="section-header">
+                            <h2>Messages</h2>
                         </div>
-                        
-                        <div class="recent-activity" id="recentActivity">
-                            <!-- Activities will be dynamically added here -->
-                            <div class="no-activity-message" id="noActivityMessage" style="text-align: center; padding: 2rem; color: #6c757d;">
-                                <i class="far fa-bell" style="font-size: 2rem; margin-bottom: 1rem; opacity: 0.7;"></i>
-                                <p>No recent activity to show</p>
+                        <div id="messagesList" class="messages-list">
+                            <div class="loading-section">
+                                <i class="fas fa-spinner fa-spin"></i>
+                                <p>Loading messages...</p>
                             </div>
                         </div>
-                        
-                        <div style="text-align: right; margin-top: 1rem;">
-                            <a href="activity.html" class="btn btn-outline btn-sm">View All Activity</a>
+                    </div>
+
+                    <!-- Settings Section -->
+                    <div id="settings" class="content-section">
+                        <div class="section-header">
+                            <h2>Settings</h2>
+                        </div>
+                        <div id="settingsForm" class="settings-form">
+                            <form id="userSettingsForm" class="form">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h2 class="card-title">Profile Details</h2>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="form-grid">
+                                            <div class="form-group">
+                                                <label for="settingsName">Full Name</label>
+                                                <input type="text" id="settingsName" class="form-control" placeholder="Your name" required>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="settingsEmail">Email</label>
+                                                <input type="email" id="settingsEmail" class="form-control" placeholder="you@example.com" readonly>
+                                                <small class="form-text">Email can’t be changed</small>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="settingsPhone">Phone</label>
+                                                <input type="tel" id="settingsPhone" class="form-control" placeholder="e.g. +65 9123 4567">
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="settingsAddress">Address</label>
+                                                <input type="text" id="settingsAddress" class="form-control" placeholder="Street address">
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="settingsCity">City</label>
+                                                <input type="text" id="settingsCity" class="form-control" placeholder="City">
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="settingsState">State</label>
+                                                <input type="text" id="settingsState" class="form-control" placeholder="State">
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="settingsZip">ZIP / Postal Code</label>
+                                                <input type="text" id="settingsZip" class="form-control" placeholder="Postal code">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="card-body" style="display:flex; gap:.75rem; justify-content:space-between; align-items:center;">
+                                        <div id="settingsStatus" class="form-status" aria-live="polite"></div>
+                                        <button type="submit" id="saveSettingsBtn" class="btn btn-primary">
+                                            <i class="fas fa-save"></i> Save Changes
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h2 class="card-title">Reset Password</h2>
+                                    </div>
+                                    <div class="card-body">
+                                        <p>We will send a password reset email to your account email address.</p>
+                                        <button type="button" id="resetPasswordBtn" class="btn btn-outline">
+                                            <i class="fas fa-key"></i> Send Password Reset Email
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
                         </div>
                     </div>
                 </main>
@@ -195,45 +221,7 @@
     </section>
 
     <!-- Firebase and Auth Scripts -->
+    <script type="module" src="js/auth-guard.js"></script>
     <script type="module" src="js/dashboard.js"></script>
-    <script>
-    // Non-module scripts
-    document.addEventListener('DOMContentLoaded', function() {
-        // Set current date
-        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-        const today = new Date();
-        const dateElement = document.getElementById('currentDate');
-        if (dateElement) {
-            dateElement.textContent = today.toLocaleDateString('en-US', options);
-        }
-        
-        // Add pet button click handler
-        const addPetBtn = document.getElementById('addPetBtn');
-        if (addPetBtn) {
-            addPetBtn.addEventListener('click', function() {
-                window.location.href = 'add-pet.html';
-            });
-        }
-
-        // Add new pet card click handler
-        const addNewPetCard = document.getElementById('addNewPetCard');
-        if (addNewPetCard) {
-            addNewPetCard.addEventListener('click', function() {
-                window.location.href = 'add-pet.html';
-            });
-        }
-        
-        // Mobile menu toggle
-        const hamburger = document.querySelector('.hamburger');
-        const navLinks = document.querySelector('.nav-links');
-        
-        if (hamburger && navLinks) {
-            hamburger.addEventListener('click', function() {
-                this.classList.toggle('active');
-                navLinks.classList.toggle('active');
-            });
-        }
-    });
-    </script>
 </body>
 </html>
