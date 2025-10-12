@@ -142,7 +142,7 @@ export {
 setPersistence(auth, browserLocalPersistence);
 
 // Email/Password Sign Up
-export const signUpWithEmail = async (email, password, userData) => {
+export const signUpWithEmail = async (email, password, userData, options = {}) => {
     console.log('Starting sign up process for:', email);
     
     try {
@@ -190,13 +190,15 @@ export const signUpWithEmail = async (email, password, userData) => {
                 await sendEmailVerification(user);
                 console.log('Verification email sent');
                 
-                // Sign out the user after successful registration
-                try {
-                    await auth.signOut();
-                    console.log('User signed out after registration');
-                } catch (signOutError) {
-                    console.error('Error signing out after registration:', signOutError);
-                    // Non-critical error, continue
+                // Sign out the user after successful registration unless explicitly disabled
+                if (options.signOut !== false) {
+                    try {
+                        await auth.signOut();
+                        console.log('User signed out after registration');
+                    } catch (signOutError) {
+                        console.error('Error signing out after registration:', signOutError);
+                        // Non-critical error, continue
+                    }
                 }
                 
                 return { 

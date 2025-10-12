@@ -32,6 +32,32 @@
         <div>
           <strong>Admin Panel</strong>
         </div>
+
+        <!-- Cancellation Fee Modal -->
+        <div id="cancelFeeModal" class="modal" aria-hidden="true">
+          <div class="modal__dialog">
+            <div class="modal__header">
+              <h3>Cancel Appointment</h3>
+              <button id="cancelFeeClose" class="icon-btn" aria-label="Close"><i class="fa fa-xmark"></i></button>
+            </div>
+            <div class="modal__body">
+              <input type="hidden" id="cancelFeeApptId" />
+              <p class="muted">Choose one of the options below. You may apply a cancellation fee or cancel without a fee.</p>
+              <div class="grid2">
+                <div>
+                  <label for="cancelFeeAmount">Cancellation Fee (RM)</label>
+                  <input id="cancelFeeAmount" class="input" type="number" min="0" step="0.01" placeholder="e.g. 25.00" />
+                  <small class="muted">Leave empty or 0 to skip fee.</small>
+                </div>
+                <div></div>
+              </div>
+            </div>
+            <div class="modal__footer">
+              <button id="cancelNoFeeBtn" class="btn">Cancel without fee</button>
+              <button id="applyFeeCancelBtn" class="btn primary"><i class="fa fa-receipt"></i> Apply fee & cancel</button>
+            </div>
+          </div>
+        </div>
         <div class="actions">
           <span id="adminEmail" class="badge"><i class="fa fa-user-shield"></i> </span>
         </div>

@@ -260,29 +260,21 @@ function renderAppointments(items) {
             </div>
             <div class="appointment-actions">
               <span class="status-badge ${a.status ? `status-${a.status}` : 'status-confirmed'}">${(a.status || 'confirmed')}</span>
-              ${String(a.status||'').toLowerCase() !== 'cancelled' ? `<button class=\"btn btn-outline btn-sm btn-cancel cancel-appt\" data-appt-id=\"${a.id}\"><i class=\"fas fa-ban\"></i> Cancel</button>` : ''}
+              ${String(a.status||'').toLowerCase() === 'pending_cancellation' && a.cancel?.paymentId && a.cancel?.feeAmount
+                ? `<a class=\"btn btn-sm\" style=\"background:#e74c3c;color:#fff;border:none\" href=\"payment.html?pay=${a.cancel.paymentId}\">`
+                    + `<i class=\"fas fa-exclamation-triangle\"></i> Pay Cancellation Fee (RM${Number(a.cancel.feeAmount).toFixed(2)})`
+                  + `</a>`
+                : (String(a.status||'').toLowerCase() !== 'cancelled'
+                    ? `<button class=\"btn btn-sm\" style=\"background:#bdc3c7;color:#fff;border:none\" disabled title=\"Cancellation will be enabled by admin if a fee applies\">`
+                        + `<i class=\"fas fa-ban\"></i> Cancel`
+                      + `</button>`
+                    : '')
+              }
             </div>
         </div>
     `).join('');
 
-  // Attach cancel handlers
-  const buttons = container.querySelectorAll('.cancel-appt');
-  buttons.forEach(btn => {
-    btn.addEventListener('click', async (e) => {
-      e.preventDefault();
-      const id = btn.getAttribute('data-appt-id');
-      const appt = items.find(x => String(x.id) === String(id));
-      if (!appt) return;
-      const d = daysBefore(appt.date);
-      const msg = d >= 3
-        ? `Are you sure you want to cancel the appointment on ${appt.date} at ${appt.time || ''}?`
-        : `Are you sure you want to cancel the appointment on ${appt.date} at ${appt.time || ''}?
-Cancelling less than 3 days before will incur a RM25 late cancellation fee.`;
-      if (confirm(msg)) {
-        await handleUserCancelAppointment(appt);
-      }
-    });
-  });
+  // cancellation is now admin-triggered with fee when applicable.
 }
 
 /**
@@ -331,19 +323,22 @@ function renderInvoices(invoices) {
             </div>
             <div class="invoice-amount ${inv.status === 'paid' ? 'paid' : 'due'}">${inv.amount ? `${inv.currency || 'MYR'} ${inv.amount}` : ''}</div>
             <div class="invoice-status ${inv.status || 'due'}">${(inv.status || 'due').toUpperCase()}</div>
-            ${inv.url ? `<a class=\"btn btn-outline btn-sm\" href=\"${inv.url}\" target=\"_blank\"><i class=\"fas fa-download\"></i> Download</a>` : `<button class=\"btn btn-outline btn-sm download-invoice\" data-invoice-id=\"${inv.id}\"><i class=\"fas fa-download\"></i> Download</button>`}
+            ${inv.url 
+                ? `<a class=\"btn btn-outline btn-sm\" href=\"${inv.url}\" target=\"_blank\"><i class=\"fas fa-eye\"></i> View</a>` 
+                : `<button class=\"btn btn-outline btn-sm view-invoice\" data-invoice-id=\"${inv.id}\"><i class=\"fas fa-eye\"></i> View</button>`}
         </div>
     `).join('');
 
-    // Attach listeners for download buttons
-    attachInvoiceDownloadHandlers(invoices);
+    // Attach listeners for view buttons
+    attachInvoiceViewHandlers(invoices);
 }
 
 async function openInvoiceById(invoiceId) {
     try {
         const user = auth.currentUser;
         if (!user) return;
-        const invRef = ref(database, `users/${user.uid}/invoices/${invoiceId}`);
+        // Read from top-level invoices collection filtered by id
+        const invRef = ref(database, `invoices/${invoiceId}`);
         const snapshot = await get(invRef);
         if (!snapshot.exists()) return;
         const inv = snapshot.val();
@@ -377,10 +372,10 @@ async function openInvoiceById(invoiceId) {
     }
 }
 
-function attachInvoiceDownloadHandlers(invoices) {
+function attachInvoiceViewHandlers(invoices) {
     const container = document.getElementById('invoiceList');
     if (!container) return;
-    const buttons = container.querySelectorAll('.download-invoice');
+    const buttons = container.querySelectorAll('.view-invoice');
     buttons.forEach(btn => {
         btn.addEventListener('click', (e) => {
             e.preventDefault();

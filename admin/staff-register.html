@@ -6,99 +6,95 @@
   <title>Staff Registration - SnugglePaw</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="../css/style.css" />
-  <link rel="stylesheet" href="../css/pages/register.css" />
+  <style>
+    :root { --primary:#2ec4b6; --dark:#2c3e50; --muted:#7f8c8d; }
+    *{ box-sizing: border-box; }
+    body{ margin:0; font-family: 'Poppins', sans-serif; background:#f5f7fb; color:var(--dark); }
+    .container{ min-height:100vh; display:grid; place-items:center; padding:24px; }
+    .card{ width:100%; max-width:520px; background:#fff; border-radius:16px; box-shadow:0 10px 30px rgba(0,0,0,.08); padding:28px; }
+    .logo{ display:flex; align-items:center; gap:10px; font-weight:700; font-size:22px; color:var(--dark); text-decoration:none; margin-bottom:8px; }
+    .logo span{ color: var(--primary); }
+    h1{ font-size:22px; margin:8px 0 4px; }
+    p.sub{ margin:0 0 22px; color: var(--muted); font-size: 14px; }
+    label{ display:block; font-size:13px; margin:12px 0 6px; color:#6b7a8f; }
+    input, select{ width:100%; padding:12px 14px; border:1px solid #e6ebf2; border-radius:10px; outline:none; font-size:14px; }
+    input:focus, select:focus{ border-color: var(--primary); box-shadow: 0 0 0 3px rgba(46,196,182,.15); }
+    .btn{ width:100%; padding:12px 16px; background:var(--primary); color:#fff; border:none; border-radius:12px; font-weight:600; cursor:pointer; margin-top:16px; }
+    .btn:disabled{ opacity:.6; cursor:not-allowed; }
+    .muted{ color:var(--muted); font-size: 12px; margin-top:12px; }
+    .row{ display:grid; grid-template-columns: 1fr 1fr; gap:12px; }
+    .alert{ display:none; margin-top:12px; padding:10px 12px; border-radius:10px; font-size:13px; }
+    .alert.error{ display:block; background:#fde8e8; color:#c0392b; }
+    .terms-row{ display:flex; align-items:center; gap:8px; margin-top:8px; }
+  </style>
 </head>
 <body>
-  <nav class="navbar">
-    <div class="container">
-      <a href="../index.html" class="logo">Snuggle<span>Paw</span></a>
-      <div class="nav-links">
-        <a href="../index.html">Home</a>
-        <a href="../services.html">Services</a>
-        <a href="../about.html">About Us</a>
-        <a href="../contact.html">Contact</a>
-        <div class="auth-buttons">
-          <a href="login.html" class="btn btn-outline">Admin Login</a>
-        </div>
-      </div>
-      <button class="hamburger"><span></span><span></span><span></span></button>
-    </div>
-  </nav>
+  <div class="container">
+    <div class="card">
+      <a class="logo" href="./login.html">Snuggle<span>Paw</span> Admin</a>
+      <h1>Create Staff Account</h1>
+      <p class="sub">For SnugglePaw staff only. You will receive a verification email.</p>
 
-  <div class="auth-container">
-    <div class="auth-image"></div>
-    <div class="auth-form-container">
-      <div class="auth-form">
-        <h1>Register Staff Account</h1>
-        <p style="text-align:center;margin-bottom:1rem;color:#666">For SnugglePaw staff only.</p>
+      <form id="staffRegisterForm">
+        <div id="errorContainer" class="alert error"></div>
 
-        <form id="staffRegisterForm" class="auth-form-fields" novalidate>
-          <div id="errorContainer" class="error-message" style="display:none;margin-bottom:1rem"></div>
+        <label for="fullName">Full Name</label>
+        <input type="text" id="fullName" placeholder="Jane Doe" required />
+        <div class="error-message"></div>
 
-          <div class="form-group">
-            <label for="fullName">Full Name</label>
-            <input type="text" id="fullName" class="form-control" required />
-            <div class="error-message"></div>
-          </div>
-
-          <div class="form-group">
+        <div class="row">
+          <div>
             <label for="email">Work Email</label>
-            <input type="email" id="email" class="form-control" required />
+            <input type="email" id="email" placeholder="jane@company.com" required />
             <div class="error-message"></div>
           </div>
-
-          <div class="form-group">
+          <div>
             <label for="phone">Phone</label>
-            <input type="tel" id="phone" class="form-control" required />
+            <input type="tel" id="phone" placeholder="012-345 6789" required />
             <div class="error-message"></div>
           </div>
+        </div>
 
-          <div class="form-group">
-            <label for="position">Position</label>
-            <select id="position" class="form-control" required>
-              <option value="">Select position</option>
-              <option value="Manager">Manager</option>
-              <option value="Pet Groomer">Pet Groomer</option>
-              <option value="Grooming Assistant / Bather">Grooming Assistant / Bather</option>
-              <option value="Receptionist">Receptionist</option>
-              <option value="Pet Care Attendant">Pet Care Attendant</option>
-            </select>
-            <div class="error-message"></div>
-          </div>
+        <label for="position">Position</label>
+        <select id="position" required>
+          <option value="">Select position</option>
+          <option value="Manager">Manager</option>
+          <option value="Pet Groomer">Pet Groomer</option>
+          <option value="Grooming Assistant / Bather">Grooming Assistant / Bather</option>
+          <option value="Receptionist">Receptionist</option>
+          <option value="Pet Care Attendant">Pet Care Attendant</option>
+        </select>
+        <div class="error-message"></div>
 
-          <div class="form-group">
+        <div class="row">
+          <div>
             <label for="password">Password</label>
-            <input type="password" id="password" class="form-control" required />
+            <input type="password" id="password" placeholder="•••••••" required />
             <div class="error-message"></div>
           </div>
-
-          <div class="form-group">
+          <div>
             <label for="confirmPassword">Confirm Password</label>
-            <input type="password" id="confirmPassword" class="form-control" required />
+            <input type="password" id="confirmPassword" placeholder="•••••••" required />
             <div class="error-message"></div>
           </div>
+        </div>
 
-          <div class="form-group terms-checkbox">
-            <input type="checkbox" id="terms" required />
-            <label for="terms">I agree to the Terms of Service and Privacy Policy</label>
-          </div>
+        <div class="terms-row">
+          <input type="checkbox" id="terms" />
+          <label for="terms" style="margin:0;">I agree to the Terms of Service and Privacy Policy</label>
+        </div>
 
-          <div class="form-group">
-            <button type="submit" class="btn btn-primary btn-block" id="registerBtn">
-              <span class="button-text">Create Staff Account</span>
-              <span class="spinner-border spinner-border-sm d-none ms-2" role="status" aria-hidden="true"></span>
-            </button>
-          </div>
-
-          <div class="terms">A verification email will be sent. After verifying, sign in at Admin Login.</div>
-        </form>
-      </div>
+        <button id="registerBtn" class="btn" type="submit">
+          <span class="button-text">Create Staff Account</span>
+          <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+        </button>
+        <p class="muted">Already staff? <a href="./login.html">Sign in</a>.</p>
+      </form>
     </div>
   </div>
 
   <script type="module" src="../js/firebase-config.js"></script>
-  <script type="module" src="../js/auth-utils.js"></script>
   <script type="module" src="./js/staff-register.js"></script>
 </body>
+<!-- Intentionally minimal to mirror admin login look -->
 </html>

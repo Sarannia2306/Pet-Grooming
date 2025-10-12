@@ -6,7 +6,8 @@ import {
   onAuthStateChanged,
   signOutUser,
   set,
-  update
+  update,
+  push
 } from "../../js/firebase-config.js";
 
 // ---------- Auth Guard & Role Check ----------
@@ -184,10 +185,20 @@ async function renderMetrics(){
   setText('metric-appointments', totalAppointments);
   setText('metric-users', activeUsers);
   setText('metric-pending', pendingPayments);
+
+  // Also compute revenue summary for reports table
+  try { await renderRevenueTable(dbPayments); } catch(e){ console.warn('Revenue table error', e); }
 }
 
 // ---------- Users ----------
 let usersCache = [];
+function getUserNameById(uid, fallback = ''){
+  try {
+    if (!uid) return fallback;
+    const u = usersCache.find(x => String(x.id) === String(uid));
+    return (u?.name || u?.fullName || u?.email || fallback);
+  } catch { return fallback; }
+}
 async function renderUsers(){
   usersCache = await fetchList('users');
   drawUsers(usersCache);
@@ -606,7 +617,7 @@ function drawAppointments(list){
   tbody.innerHTML = list.map(a => `
     <tr>
       <td>${escapeHtml(a.pet || a.petName || '')}</td>
-      <td>${escapeHtml(a.service || a.serviceType || '')}</td>
+      <td>${escapeHtml(a.serviceName || a.service || a.serviceType || (a.service && a.service.name) || '')}</td>
       <td>${formatDate(a.date)}</td>
       <td>${escapeHtml(a.time || '')}</td>
       <td><span class="badge">${escapeHtml(a.status || 'scheduled')}</span></td>
@@ -630,12 +641,110 @@ function drawAppointments(list){
     btn.addEventListener('click', async () => {
       const id = btn.getAttribute('data-appt-cancel');
       if (!id) return;
-      if (!confirm('Cancel this appointment?')) return;
-      await updateAppointmentStatus(id, { status: 'cancelled' });
-      showToast('success', 'Cancelled', 'Appointment marked as cancelled');
+      openCancelFeeModal(id);
     });
   });
 }
+
+// ---------- Cancel Fee Modal Logic ----------
+const cancelFeeModal = document.getElementById('cancelFeeModal');
+const cancelFeeClose = document.getElementById('cancelFeeClose');
+const cancelNoFeeBtn = document.getElementById('cancelNoFeeBtn');
+const applyFeeCancelBtn = document.getElementById('applyFeeCancelBtn');
+const cancelFeeAmountEl = document.getElementById('cancelFeeAmount');
+const cancelFeeApptIdEl = document.getElementById('cancelFeeApptId');
+
+function openCancelFeeModal(apptId){
+  cancelFeeApptIdEl.value = apptId || '';
+  cancelFeeAmountEl.value = '';
+  cancelFeeModal?.setAttribute('aria-hidden','false');
+  cancelFeeModal?.classList.add('open');
+}
+function closeCancelFeeModal(){
+  cancelFeeModal?.setAttribute('aria-hidden','true');
+  cancelFeeModal?.classList.remove('open');
+}
+cancelFeeClose?.addEventListener('click', closeCancelFeeModal);
+cancelFeeModal?.addEventListener('click', (e) => { if (e.target === cancelFeeModal) closeCancelFeeModal(); });
+
+cancelNoFeeBtn?.addEventListener('click', async () => {
+  const id = cancelFeeApptIdEl.value;
+  if (!id) return;
+  try {
+    await updateAppointmentStatus(id, { status: 'cancelled' });
+    closeCancelFeeModal();
+    showToast('success', 'Cancelled', 'Appointment marked as cancelled');
+  } catch (e){ console.error(e); showToast('error','Failed','Could not cancel appointment'); }
+});
+
+applyFeeCancelBtn?.addEventListener('click', async () => {
+  const id = cancelFeeApptIdEl.value;
+  const amtRaw = parseFloat(cancelFeeAmountEl.value || '0');
+  const amount = isNaN(amtRaw) ? 0 : Math.max(0, amtRaw);
+  if (!id) return;
+  if (!amount){
+    // If no amount entered, behave like no-fee cancel
+    await cancelNoFeeBtn?.click();
+    return;
+  }
+  try {
+    // Read appointment to get userId
+    const apptSnap = await get(ref(database, `appointments/${id}`));
+    const appt = apptSnap.exists() ? apptSnap.val() : null;
+    const userId = appt?.userId || null;
+
+    // Create payment (pending)
+    const payId = push(ref(database, 'payments')).key;
+    const payment = {
+      id: payId,
+      appointmentId: id,
+      userId: userId,
+      amount: amount,
+      currency: 'MYR',
+      type: 'admin_cancellation_fee',
+      status: 'pending',
+      createdAt: new Date().toISOString()
+    };
+    await set(ref(database, `payments/${payId}`), payment);
+
+    // Create invoice (due)
+    const invId = push(ref(database, 'invoices')).key;
+    const invoice = {
+      id: invId,
+      number: (invId||'').slice(-6).toUpperCase(),
+      date: new Date().toISOString(),
+      service: 'Cancellation Fee',
+      appointmentId: id,
+      paymentId: payId,
+      userId: userId,
+      amount: amount,
+      currency: 'MYR',
+      status: 'due'
+    };
+    await set(ref(database, `invoices/${invId}`), invoice);
+
+    // Link invoice on payment for easy lookup
+    await update(ref(database, `payments/${payId}`), { invoiceId: invId });
+
+    // Mark appointment as pending cancellation awaiting user action
+    await update(ref(database, `appointments/${id}`), {
+      status: 'pending_cancellation',
+      cancel: {
+        feeAmount: amount,
+        paymentId: payId,
+        invoiceId: invId,
+        requestedBy: 'admin',
+        requestedAt: new Date().toISOString()
+      }
+    });
+
+    closeCancelFeeModal();
+    showToast('success', 'Cancellation requested', `Awaiting user payment RM${amount.toFixed(2)}`);
+  } catch (e){
+    console.error(e);
+    showToast('error','Failed','Could not apply fee/cancel');
+  }
+});
 
 // ---------- Services ----------
 let servicesCache = [];
@@ -1125,7 +1234,7 @@ function drawPayments(list){
   tbody.innerHTML = list.map(p => `
     <tr>
       <td>${escapeHtml(p.bookingId || p.booking || p.id || '')}</td>
-      <td>${escapeHtml(p.userEmail || p.user || '')}</td>
+      <td>${escapeHtml(getUserNameById(p.userId, p.userEmail || p.user || ''))}</td>
       <td>${price(p.amount)}</td>
       <td><span class="badge">${escapeHtml(p.status || 'pending')}</span></td>
       <td>${formatDate(p.createdAt || p.date)}</td>
@@ -1155,7 +1264,7 @@ function openInvoiceWindow(p){
   <div class="muted">Date: ${formatDate(p.createdAt || p.date)}</div>
   <table>
     <tr><th>Booking</th><td>${escapeHtml(p.bookingId || p.booking || '')}</td></tr>
-    <tr><th>User</th><td>${escapeHtml(p.userEmail || p.user || '')}</td></tr>
+    <tr><th>User</th><td>${escapeHtml(getUserNameById(p.userId, p.userEmail || p.user || ''))}</td></tr>
     <tr><th>Status</th><td><span class="badge">${escapeHtml(p.status||'paid')}</span></td></tr>
     <tr><th>Amount</th><td class="right">${price(p.amount)}</td></tr>
   </table>
@@ -1197,6 +1306,91 @@ function applyReportFilters(){
   filteredBookings = apptsCache.filter(b => withinRange(b.date || b.createdAt, from, to));
   filteredPayments = paymentsCache.filter(p => withinRange(p.createdAt || p.date, from, to));
   showToast('info', 'Reports filtered', 'Filters applied to exports');
+  try { renderRevenueTable(filteredPayments.length ? filteredPayments : paymentsCache); } catch {}
+}
+
+// ---------- Revenue Summary ----------
+function startOfDay(d){ const x=new Date(d); x.setHours(0,0,0,0); return x; }
+function startOfWeek(d){ const x=startOfDay(d); const day=(x.getDay()+6)%7; x.setDate(x.getDate()-day); return x; }
+function startOfMonth(d){ const x=new Date(d); x.setDate(1); x.setHours(0,0,0,0); return x; }
+function startOfYear(d){ const x=new Date(d); x.setMonth(0,1); x.setHours(0,0,0,0); return x; }
+function sum(arr){ return arr.reduce((s,v)=>s+(Number(v)||0),0); }
+
+function renderRevenueTable(payments){
+  const tbody = document.getElementById('revenueTbody');
+  if (!tbody) return;
+  const now = new Date();
+  const paid = (payments || []).filter(p => (p.status||'')==='paid');
+
+  function calc(rangeStart){
+    const items = paid.filter(p => {
+      const t = new Date(p.paidAt || p.createdAt || p.date || 0);
+      return t >= rangeStart;
+    });
+    const fees = items.filter(p => (p.type||'').includes('cancellation_fee')).map(p => p.amount);
+    const conf = items.filter(p => !(p.type||'').includes('cancellation_fee')).map(p => p.amount);
+    const feeTotal = sum(fees);
+    const confTotal = sum(conf);
+    return { feeTotal, confTotal, total: feeTotal + confTotal };
+  }
+
+  const day = calc(startOfDay(now));
+  const week = calc(startOfWeek(now));
+  const month = calc(startOfMonth(now));
+  const year = calc(startOfYear(now));
+
+  const row = (label, obj) => `
+    <tr>
+      <td>${label}</td>
+      <td>${price(obj.confTotal)}</td>
+      <td>${price(obj.feeTotal)}</td>
+      <td>${price(obj.total)}</td>
+    </tr>`;
+
+  tbody.innerHTML = [
+    row('Today', day),
+    row('This Week', week),
+    row('This Month', month),
+    row('This Year', year)
+  ].join('');
+
+  // Render/Update Chart.js bar chart
+  try {
+    const ctx = document.getElementById('revenueChart');
+    if (!ctx) return;
+    const labels = ['Today', 'This Week', 'This Month', 'This Year'];
+    const conf = [day.confTotal, week.confTotal, month.confTotal, year.confTotal];
+    const fees = [day.feeTotal, week.feeTotal, month.feeTotal, year.feeTotal];
+
+    // Persist chart instance on window to allow updates
+    if (window._revenueChart) {
+      window._revenueChart.data.labels = labels;
+      window._revenueChart.data.datasets[0].data = conf;
+      window._revenueChart.data.datasets[1].data = fees;
+      window._revenueChart.update();
+    } else {
+      window._revenueChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [
+            { label: 'Confirmed Revenue', data: conf, backgroundColor: '#2ec4b6' },
+            { label: 'Cancellation Fees', data: fees, backgroundColor: '#e74c3c' }
+          ]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: { beginAtZero: true, ticks: { callback: v => 'RM ' + v } }
+          },
+          plugins: {
+            legend: { position: 'bottom' },
+            tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: RM ${Number(ctx.parsed.y||0).toFixed(2)}` } }
+          }
+        }
+      });
+    }
+  } catch (e) { console.warn('Chart render failed', e); }
 }
 
 filterReportsBtn?.addEventListener('click', applyReportFilters);

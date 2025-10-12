@@ -1,4 +1,4 @@
-import { auth, database, ref, set, updateProfile, sendEmailVerification, createUserWithEmailAndPassword } from '../../js/firebase-config.js';
+import { auth, database, ref, set, updateProfile, sendEmailVerification, signUpWithEmail } from './firebase-config.js';
 
 const qs = (s, r=document) => r.querySelector(s);
 
@@ -55,22 +55,18 @@ async function handleStaffRegister(e){
 
   btnLoading(true);
   try {
-    // Create Auth user only (no write to users/{uid})
-    const cred = await createUserWithEmailAndPassword(auth, email, password);
-    const user = cred.user;
-    const uid = user.uid;
-    // Update display name (optional)
-    try { await updateProfile(user, { displayName: name }); } catch {}
-    // Send verification email
-    try { await sendEmailVerification(user); } catch {}
+    // Create Auth user and base user profile
+    const res = await signUpWithEmail(email, password, { name, phone });
+    if (!res?.success) throw new Error(res?.error || 'Failed to register');
+
+    const uid = res.user?.uid;
     // Create admin profile to enable admin access
     const adminProfile = { name, email, phone, position, role: 'admin', status: 'active', createdAt: new Date().toISOString() };
     await set(ref(database, `admin/${uid}`), adminProfile);
 
     // Notify and redirect to admin login
     alert('Staff account created. Please verify your email, then sign in at the Admin Login.');
-    try { await auth.signOut(); } catch {}
-    window.location.href = './login.html';
+    window.location.href = 'admin/login.html';
   } catch (err){
     console.error('Staff register error', err);
     showTopError(err?.message || 'Registration failed. Please try again.');
