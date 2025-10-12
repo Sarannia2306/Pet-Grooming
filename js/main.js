@@ -1,5 +1,5 @@
 /**
- * PawfectCare - Main JavaScript Entry Point
+ * SnuggleCare - Main JavaScript Entry Point
  * This file serves as the entry point for all JavaScript functionality
  * It imports and initializes all modules
  */
@@ -21,9 +21,9 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
         
-        console.log('PawfectCare: All modules initialized successfully');
+        console.log('SnuggleCare: All modules initialized successfully');
     } catch (error) {
-        console.error('PawfectCare: Error initializing modules', error);
+        console.error('SnuggleCare: Error initializing modules', error);
     }
 });
 

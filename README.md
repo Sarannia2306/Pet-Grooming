@@ -1,6 +1,6 @@
-# PawfectCare - Pet Grooming Services
+# SnugglePaw - Pet Grooming Services
 
-A modern, responsive website for PawfectCare Pet Grooming Services, featuring a clean design and smooth user experience.
+A modern, responsive website for SnugglePaw Pet Grooming Services, featuring a clean design and smooth user experience.
 
 ## Features
 
@@ -14,7 +14,7 @@ A modern, responsive website for PawfectCare Pet Grooming Services, featuring a 
 ## Project Structure
 
 ```
-pawfect-care/
+Snuggle-Paw/
 ├── css/                    # CSS files
 │   ├── pages/             # Page-specific styles
 │   │   ├── about.css
@@ -56,8 +56,8 @@ pawfect-care/
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/your-username/pawfect-care.git
-   cd pawfect-care
+   git clone https://github.com/your-username/Snuggle-Paw.git
+   cd Snuggle-Paw
    ```
 
 2. Install dependencies:

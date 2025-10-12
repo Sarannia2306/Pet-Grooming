@@ -4,7 +4,7 @@
  * and user data display
  */
 
-import { auth, database, ref, get, update, signOutUser } from './firebase-config.js';
+import { auth, database, ref, get, update, set, push, signOutUser } from './firebase-config.js';
 import { onValue } from 'https://www.gstatic.com/firebasejs/10.1.0/firebase-database.js';
 import { sendEmailVerification } from 'https://www.gstatic.com/firebasejs/10.1.0/firebase-auth.js';
 import { showAlert, requireAuth } from './auth-utils.js';
@@ -233,8 +233,8 @@ async function loadUserAppointments(userId) {
 }
 
 function renderAppointments(items) {
-    const container = document.getElementById('appointmentsList');
-    if (!container) return;
+  const container = document.getElementById('appointmentsList');
+  if (!container) return;
 
     if (!items || items.length === 0) {
         container.innerHTML = `
@@ -258,9 +258,31 @@ function renderAppointments(items) {
                     ${a.price != null ? `<span><i class=\"fas fa-dollar-sign\"></i>${a.price}</span>` : ''}
                 </div>
             </div>
-            <span class="status-badge ${a.status ? `status-${a.status}` : 'status-confirmed'}">${(a.status || 'confirmed')}</span>
+            <div class="appointment-actions">
+              <span class="status-badge ${a.status ? `status-${a.status}` : 'status-confirmed'}">${(a.status || 'confirmed')}</span>
+              ${String(a.status||'').toLowerCase() !== 'cancelled' ? `<button class=\"btn btn-outline btn-sm btn-cancel cancel-appt\" data-appt-id=\"${a.id}\"><i class=\"fas fa-ban\"></i> Cancel</button>` : ''}
+            </div>
         </div>
     `).join('');
+
+  // Attach cancel handlers
+  const buttons = container.querySelectorAll('.cancel-appt');
+  buttons.forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      e.preventDefault();
+      const id = btn.getAttribute('data-appt-id');
+      const appt = items.find(x => String(x.id) === String(id));
+      if (!appt) return;
+      const d = daysBefore(appt.date);
+      const msg = d >= 3
+        ? `Are you sure you want to cancel the appointment on ${appt.date} at ${appt.time || ''}?`
+        : `Are you sure you want to cancel the appointment on ${appt.date} at ${appt.time || ''}?
+Cancelling less than 3 days before will incur a RM25 late cancellation fee.`;
+      if (confirm(msg)) {
+        await handleUserCancelAppointment(appt);
+      }
+    });
+  });
 }
 
 /**
@@ -786,4 +808,71 @@ window.addEventListener('unhandledrejection', (event) => {
 });
 
 // Export functions that need to be accessible from HTML
-export { handleSignOut as handleLogout };
+export { handleSignOut as handleLogout, handleUserCancelAppointment, daysBefore };
+
+// ===== Appointments: Cancel with 3-day rule and RM25 late fee =====
+async function handleUserCancelAppointment(appt){
+  try {
+    const user = auth.currentUser;
+    if (!user) { showAlert('Please login first.', 'error'); return; }
+    if (!appt?.id || !appt?.date){ showAlert('Appointment data is incomplete.', 'error'); return; }
+
+    const daysUntil = daysBefore(appt.date);
+    const apptRef = ref(database, `appointments/${appt.id}`);
+
+    if (daysUntil >= 3){
+      await update(apptRef, { status: 'cancelled', cancelledAt: new Date().toISOString(), cancelReason: 'user' });
+      showAlert('Your appointment has been cancelled.', 'success');
+    } else {
+      const amount = 25;
+      const payKey = push(ref(database, 'payments')).key;
+      const payment = {
+        id: payKey,
+        appointmentId: appt.id,
+        userId: user.uid,
+        userEmail: user.email || '',
+        amount: amount,
+        currency: 'MYR',
+        type: 'late_cancellation_fee',
+        status: 'pending',
+        createdAt: new Date().toISOString()
+      };
+      await set(ref(database, `payments/${payKey}`), payment);
+
+      const invKey = push(ref(database, 'invoices')).key;
+      const invoice = {
+        id: invKey,
+        number: (invKey || '').slice(-6).toUpperCase(),
+        userId: user.uid,
+        date: new Date().toISOString(),
+        service: 'Late Cancellation Fee',
+        appointmentId: appt.id,
+        paymentId: payKey,
+        amount: amount,
+        currency: 'MYR',
+        status: 'due'
+      };
+      await set(ref(database, `invoices/${invKey}`), invoice);
+
+      await update(apptRef, { status: 'cancelled', cancelledAt: new Date().toISOString(), cancelReason: 'late_fee_applied' });
+      showAlert('Appointment cancelled. A RM25 late cancellation fee has been applied.', 'warning');
+    }
+
+    await loadUserAppointments(auth.currentUser.uid);
+  } catch (err){
+    console.error('Cancel appointment error', err);
+    showAlert('Failed to cancel the appointment. Please try again.', 'error');
+  }
+}
+
+function daysBefore(dateStr){
+  try {
+    const today = new Date();
+    const todayMid = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const [y,m,d] = String(dateStr).split('-').map(Number);
+    if (!y || !m || !d) return -9999;
+    const apptMid = new Date(y, m-1, d);
+    const diffMs = apptMid.getTime() - todayMid.getTime();
+    return Math.floor(diffMs / (1000*60*60*24));
+  } catch { return -9999; }
+}

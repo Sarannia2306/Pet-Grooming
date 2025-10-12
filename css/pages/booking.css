@@ -1,19 +1,32 @@
 .booking-hero {
-    background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), 
-                url('https://images.unsplash.com/photo-1516734212186-967cc9369e8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80') 
+    background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), 
+                url('../../images/booking 1.jpg') 
                 no-repeat center center/cover;
     color: white;
     text-align: center;
     padding: 120px 0 80px;
     margin-top: 80px;
 }
-
 .booking-container {
     display: grid;
     grid-template-columns: 1fr; /* single column now */
     padding: 64px 0 96px;
     max-width: 880px;
     margin: 0 auto;
+}
+
+.booking-hero h1 {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    color:#fff;
+}
+
+.booking-hero p {
+    font-size: 1.2rem;
+    font-weight: bold;
+    max-width: 700px;
+    margin: 0 auto;
+    color: var(--primary-dark);
 }
 
 .booking-form {

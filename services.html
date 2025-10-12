@@ -3,175 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Our Services - PawfectCare</title>
+    <title>Our Services - SnugglePaw</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
-    <style>
-        /* Additional styles for services page */
-        .services-hero {
-            background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('https://images.unsplash.com/photo-1544568100-847a948585b9?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80') no-repeat center center/cover;
-            color: white;
-            text-align: center;
-            padding: 120px 0 80px;
-            margin-top: 80px;
-        }
-        
-        .services-hero h1 {
-            font-size: 3rem;
-            margin-bottom: 1rem;
-            color: white;
-        }
-        
-        .services-hero p {
-            font-size: 1.2rem;
-            max-width: 800px;
-            margin: 0 auto 2rem;
-            color: rgba(255, 255, 255, 0.9);
-        }
-        
-        .service-detail {
-            padding: 100px 0;
-        }
-        
-        .service-detail:nth-child(odd) {
-            background-color: #f9f9f9;
-        }
-        
-        .service-content {
-            display: flex;
-            align-items: center;
-            gap: 4rem;
-        }
-        
-        .service-content.reverse {
-            flex-direction: row-reverse;
-        }
-        
-        .service-text {
-            flex: 1;
-        }
-        
-        .service-image {
-            flex: 1;
-            border-radius: 15px;
-            overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-        }
-        
-        .service-image img {
-            width: 100%;
-            height: auto;
-            transition: transform 0.5s ease;
-        }
-        
-        .service-image:hover img {
-            transform: scale(1.05);
-        }
-        
-        .service-features {
-            margin: 2rem 0;
-        }
-        
-        .feature-item {
-            display: flex;
-            align-items: flex-start;
-            margin-bottom: 1rem;
-        }
-        
-        .feature-icon {
-            background-color: var(--primary-color);
-            color: white;
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-right: 15px;
-            flex-shrink: 0;
-            margin-top: 3px;
-        }
-        
-        .pricing-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 2rem 0;
-            background: white;
-            border-radius: 10px;
-            overflow: hidden;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
-        }
-        
-        .pricing-table th, 
-        .pricing-table td {
-            padding: 15px;
-            text-align: left;
-            border-bottom: 1px solid #eee;
-        }
-        
-        .pricing-table th {
-            background-color: var(--primary-color);
-            color: white;
-            font-weight: 500;
-        }
-        
-        .pricing-table tr:last-child td {
-            border-bottom: none;
-        }
-        
-        .pricing-table tr:hover {
-            background-color: #f5f5f5;
-        }
-        
-        .price {
-            color: var(--primary-color);
-            font-weight: 600;
-            font-size: 1.1rem;
-        }
-        
-        @media (max-width: 992px) {
-            .service-content,
-            .service-content.reverse {
-                flex-direction: column;
-                text-align: center;
-            }
-            
-            .service-image {
-                max-width: 100%;
-                margin-top: 2rem;
-            }
-            
-            .feature-item {
-                justify-content: center;
-            }
-        }
-        
-        @media (max-width: 768px) {
-            .services-hero h1 {
-                font-size: 2.2rem;
-            }
-            
-            .services-hero p {
-                font-size: 1rem;
-                padding: 0 1rem;
-            }
-            
-            .pricing-table {
-                display: block;
-                overflow-x: auto;
-                white-space: nowrap;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="css/pages/services.css">
 </head>
 <body>
     <!-- Navigation -->
     <nav class="navbar">
         <div class="container">
-            <a href="index.html" class="logo">Pawfect<span>Care</span></a>
+            <a href="index.html" class="logo">Snuggle<span>Paw</span></a>
             <div class="nav-links">
                 <a href="index.html">Home</a>
                 <a href="services.html" class="active">Services</a>
@@ -238,44 +82,13 @@
                         </div>
                     </div>
                     
-                    <h3>Pricing</h3>
-                    <table class="pricing-table">
-                        <tr>
-                            <th>Service</th>
-                            <th>Small Dog</th>
-                            <th>Medium Dog</th>
-                            <th>Large Dog</th>
-                        </tr>
-                        <tr>
-                            <td>Basic Grooming</td>
-                            <td class="price">RM45</td>
-                            <td class="price">RM55</td>
-                            <td class="price">RM65</td>
-                        </tr>
-                        <tr>
-                            <td>Full Grooming</td>
-                            <td class="price">RM60</td>
-                            <td class="price">RM75</td>
-                            <td class="price">RM90</td>
-                        </tr>
-                        <tr>
-                            <td>Bath & Brush</td>
-                            <td class="price">RM35</td>
-                            <td class="price">RM45</td>
-                            <td class="price">RM55</td>
-                        </tr>
-                        <tr>
-                            <td>Nail Trim</td>
-                            <td class="price">RM15</td>
-                            <td class="price">RM15</td>
-                            <td class="price">RM20</td>
-                        </tr>
-                    </table>
+                    <h3>Grooming Packages</h3>
+                    <div id="groomingPricing" class="pricing-table-wrap grid-2"></div>
                     
-                    <a href="booking.html" class="btn btn-primary" style="margin-top: 1.5rem;">Book Grooming</a>
+                    <a href="booking.html" class="btn btn-primary book-cta" data-service="grooming" style="margin-top: 1.5rem;">Book Grooming</a>
                 </div>
                 <div class="service-image">
-                    <img src="https://images.unsplash.com/photo-1594149929911-78975a43d4f5?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80" alt="Dog Grooming">
+                    <img src="images/service1.jpg" alt="Dog Grooming">
                 </div>
             </div>
         </div>
@@ -320,37 +133,15 @@
                     </div>
                     
                     <h3>Daycare Packages</h3>
-                    <table class="pricing-table">
-                        <tr>
-                            <th>Package</th>
-                            <th>Half Day (Up to 5 hours)</th>
-                            <th>Full Day (Up to 10 hours)</th>
-                            <th>5-Day Package</th>
-                        </tr>
-                        <tr>
-                            <td>1 Dog</td>
-                            <td class="price">RM25</td>
-                            <td class="price">RM35</td>
-                            <td class="price">RM150</td>
-                        </tr>
-                        <tr>
-                            <td>2 Dogs</td>
-                            <td class="price">RM40</td>
-                            <td class="price">RM60</td>
-                            <td class="price">RM250</td>
-                        </tr>
-                        <tr>
-                            <td>Additional Dog</td>
-                            <td class="price">RM15</td>
-                            <td class="price">RM20</td>
-                            <td class="price">RM80</td>
-                        </tr>
-                    </table>
+                    <div id="daycarePricing" class="pricing-table-wrap grid-2"></div>
+                    <p class="daycare-note" style="margin-top:.5rem; color:#667085; font-size:.95rem">
+                        <em>* Half Day:</em> 10am–7pm / 5pm–10pm &nbsp;&nbsp; <em>* Full Day:</em> 10am–10pm
+                    </p>
                     
-                    <a href="booking.html" class="btn btn-primary" style="margin-top: 1.5rem;">Book Daycare</a>
+                    <a href="booking.html" class="btn btn-primary book-cta" data-service="daycare" style="margin-top: 1.5rem;">Book Daycare</a>
                 </div>
                 <div class="service-image">
-                    <img src="https://images.unsplash.com/photo-1583511655826-05700d52f4a9?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80" alt="Pet Daycare">
+                    <img src="images/service4.jpeg" alt="Pet Daycare">
                 </div>
             </div>
         </div>
@@ -394,49 +185,26 @@
                         </div>
                     </div>
                     
-                    <h3>Boarding Rates</h3>
-                    <table class="pricing-table">
-                        <tr>
-                            <th>Accommodation</th>
-                            <th>Per Night</th>
-                            <th>7+ Nights</th>
-                            <th>Additional Pet</th>
-                        </tr>
-                        <tr>
-                            <td>Standard Kennel</td>
-                            <td class="price">RM45</td>
-                            <td class="price">RM40/night</td>
-                            <td class="price">RM35</td>
-                        </tr>
-                        <tr>
-                            <td>Deluxe Suite</td>
-                            <td class="price">RM65</td>
-                            <td class="price">RM55/night</td>
-                            <td class="price">RM50</td>
-                        </tr>
-                        <tr>
-                            <td>Luxury Villa</td>
-                            <td class="price">RM85</td>
-                            <td class="price">RM75/night</td>
-                            <td class="price">RM65</td>
-                        </tr>
-                    </table>
                     
-                    <div style="margin-top: 1.5rem;">
-                        <p><strong>Additional Services:</strong></p>
-                        <ul style="list-style-type: disc; margin-left: 1.5rem;">
-                            <li>Daily Playtime: RM15/day</li>
-                            <li>One-on-One Cuddle Time: RM10/session</li>
-                            <li>Medication Administration: RM5/day</li>
-                            <li>Bath Before Pickup: RM25-40</li>
-                        </ul>
-                    </div>
-                    
-                    <a href="booking.html" class="btn btn-primary" style="margin-top: 1.5rem;">Book Boarding</a>
                 </div>
                 <div class="service-image">
-                    <img src="https://images.unsplash.com/photo-1586671267731-da2cf3ceeb80?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80" alt="Pet Boarding">
+                    <img src="images/service3.jpg" alt="Pet Boarding">
                 </div>
+            </div>
+            
+            <!-- Full-width packages area -->
+            <div class="packages">
+                <h3>Boarding Packages</h3>
+                <div id="boardingPricing" class="pricing-table-wrap grid-2"></div>
+                <div class="boarding-extras" style="margin-top: 1.5rem;">
+                    <p><strong>Additional Services:</strong></p>
+                    <ul style="list-style-type: disc; margin-left: 1.5rem;">
+                        <li>Daily Playtime: RM15/day</li>
+                        <li>Medication Administration: RM5/day</li>
+                        <li>Bath Before Pickup: RM25-40</li>
+                    </ul>
+                </div>
+                <a href="booking.html" class="btn btn-primary book-cta" data-service="boarding" style="margin-top: 1.5rem;">Book Boarding</a>
             </div>
         </div>
     </section>
@@ -447,23 +215,23 @@
             <div class="cta-content">
                 <h2>Ready to Book Our Services?</h2>
                 <p>Join our community of happy pets and their owners who trust us with their pet care needs.</p>
-                <a href="booking.html" class="btn btn-primary">Book Now</a>
+                    <a href="booking.html" class="btn btn-primary book-cta auth-check" data-service="boarding">Book Now!</a>
             </div>
         </div>
     </section>
 
-    <!-- Footer -->
-    <footer class="footer">
+      <!-- Footer -->
+      <footer class="footer">
         <div class="container">
             <div class="footer-content">
                 <div class="footer-about">
-                    <h3>PawfectCare</h3>
+                    <h3>SnugglePaw</h3>
                     <p>Professional pet care services with AI-powered recognition for a safer, more personalized experience.</p>
                     <div class="social-links">
                         <a href="#"><i class="fab fa-facebook-f"></i></a>
                         <a href="#"><i class="fab fa-twitter"></i></a>
                         <a href="#"><i class="fab fa-instagram"></i></a>
-                        <a href="#"><i class="fab fa-linkedin-in"></i></a>
+                        <a href="#"><i class="fab fa-tiktok"></i></a>
                     </div>
                 </div>
                 <div class="footer-links">
@@ -487,22 +255,24 @@
                 <div class="footer-contact">
                     <h4>Contact Us</h4>
                     <ul>
-                        <li><i class="fas fa-map-marker-alt"></i> 123 Pet Street, Pet City</li>
-                        <li><i class="fas fa-phone"></i> (123) 456-7890</li>
-                        <li><i class="fas fa-envelope"></i> info@pawfectcare.com</li>
+                        <li><i class="fas fa-map-marker-alt"></i> 123 Jalan Sultan Ahmad Shah, 10050 George Town, Penang, Malaysia</li>
+                        <li><i class="fas fa-phone"></i> +60 4-123 4567</li>
+                        <li><i class="fas fa-envelope"></i> info@SnugglePaw.com.my</li>
                     </ul>
                 </div>
             </div>
             <div class="footer-bottom">
-                <p>&copy; 2023 PawfectCare. All rights reserved.</p>
+                <p>&copy; 2023 SnugglePaw. All rights reserved.</p>
                 <div class="footer-legal">
-                    <a href="#">Privacy Policy</a>
-                    <a href="#">Terms of Service</a>
+                    <a href="privacy.html#privacy">Privacy Policy</a>
+                    <a href="terms.html#terms">Terms of Service</a>
                 </div>
             </div>
         </div>
     </footer>
 
+    <script type="module" src="js/auth-navbar.js"></script>
+    <script type="module" src="js/services.js"></script>
     <script src="js/main.js"></script>
 </body>
 </html>

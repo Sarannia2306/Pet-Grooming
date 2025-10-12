@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PawfectCare - Secure Pet Sitting & Grooming</title>
+    <title>SnuggleCare - Secure Pet Sitting & Grooming</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -16,7 +16,7 @@
     <!-- Navigation -->
     <nav class="navbar">
         <div class="container">
-            <a href="index.html" class="logo">Pawfect<span>Care</span></a>
+            <a href="index.html" class="logo">Snuggle<span>Paw</span></a>
             <div class="nav-links">
                 <a href="index.html" class="active">Home</a>
                 <a href="services.html">Services</a>
@@ -48,7 +48,7 @@
                 </div>
             </div>
             <div class="hero-image">
-                <img src="https://images.unsplash.com/photo-1583511655826-05700d52f4a9?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80" alt="Happy dog with groomer">
+                <img src="images/home 1.png" alt="Happy dog with groomer">
             </div>
         </div>
     </header>
@@ -94,8 +94,8 @@
         <div class="container">
             <div class="about-content">
                 <div class="about-text">
-                    <h2>About PawfectCare</h2>
-                    <p>At PawfectCare, we combine cutting-edge AI technology with compassionate pet care to provide the best experience for you and your furry family members. Our AI-based pet recognition system ensures secure and personalized care for every pet.</p>
+                    <h2>About SnugglePaw</h2>
+                    <p>At SnugglePaw, we combine cutting-edge AI technology with compassionate pet care to provide the best experience for you and your furry family members. Our AI-based pet recognition system ensures secure and personalized care for every pet.</p>
                     <ul class="features-list">
                         <li><i class="fas fa-check-circle"></i> AI-Powered Pet Recognition</li>
                         <li><i class="fas fa-check-circle"></i> Certified Pet Care Professionals</li>
@@ -105,7 +105,7 @@
                     <a href="about.html" class="btn btn-primary">Learn More About Us</a>
                 </div>
                 <div class="about-image">
-                    <img src="https://images.unsplash.com/photo-1559163499-413811fb2344?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80" alt="Happy dog">
+                    <img src="images/home 2.jpg" alt="Happy pets">
                 </div>
             </div>
         </div>
@@ -116,8 +116,8 @@
         <div class="container">
             <div class="cta-content">
                 <h2>Ready to give your pet the care they deserve?</h2>
-                <p>Join thousands of happy pet parents who trust PawfectCare for their pet care needs.</p>
-                <a href="register.html" class="btn btn-primary">Get Started</a>
+                <p>Join thousands of happy pet parents who trust SnugglePaw for their pet care needs.</p>
+                <a href="register.html" id="ctaGetStarted" class="btn btn-primary">Get Started</a>
             </div>
         </div>
     </section>
@@ -127,13 +127,13 @@
         <div class="container">
             <div class="footer-content">
                 <div class="footer-about">
-                    <h3>PawfectCare</h3>
+                    <h3>SnugglePaw</h3>
                     <p>Professional pet care services with AI-powered recognition for a safer, more personalized experience.</p>
                     <div class="social-links">
                         <a href="#"><i class="fab fa-facebook-f"></i></a>
                         <a href="#"><i class="fab fa-twitter"></i></a>
                         <a href="#"><i class="fab fa-instagram"></i></a>
-                        <a href="#"><i class="fab fa-linkedin-in"></i></a>
+                        <a href="#"><i class="fab fa-tiktok"></i></a>
                     </div>
                 </div>
                 <div class="footer-links">
@@ -157,23 +157,47 @@
                 <div class="footer-contact">
                     <h4>Contact Us</h4>
                     <ul>
-                        <li><i class="fas fa-map-marker-alt"></i> 123 Pet Street, Pet City</li>
-                        <li><i class="fas fa-phone"></i> (123) 456-7890</li>
-                        <li><i class="fas fa-envelope"></i> info@pawfectcare.com</li>
+                        <li><i class="fas fa-map-marker-alt"></i> 123 Jalan Sultan Ahmad Shah, 10050 George Town, Penang, Malaysia</li>
+                        <li><i class="fas fa-phone"></i> +60 4-123 4567</li>
+                        <li><i class="fas fa-envelope"></i> info@SnugglePaw.com.my</li>
                     </ul>
                 </div>
             </div>
             <div class="footer-bottom">
-                <p>&copy; 2023 PawfectCare. All rights reserved.</p>
+                <p>&copy; 2023 SnugglePaw. All rights reserved.</p>
                 <div class="footer-legal">
-                    <a href="#">Privacy Policy</a>
-                    <a href="#">Terms of Service</a>
+                    <a href="privacy.html#privacy">Privacy Policy</a>
+                    <a href="terms.html#terms">Terms of Service</a>
                 </div>
             </div>
         </div>
     </footer>
 
-    <script type="module" src="js/navbar-auth.js"></script>
+    <script type="module" src="js/auth-navbar.js"></script>
+    <script type="module">
+        import { getAuth } from 'https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js';
+        import { app } from './js/firebase-config.js';
+
+        const auth = getAuth(app);
+        const cta = document.getElementById('ctaGetStarted');
+        if (cta) {
+            cta.addEventListener('click', (e) => {
+                // Allow default link if anything fails
+                try {
+                    e.preventDefault();
+                    const user = auth.currentUser;
+                    if (user) {
+                        window.location.href = 'services.html';
+                    } else {
+                        window.location.href = 'register.html';
+                    }
+                } catch (err) {
+                    // Fallback to original href
+                    window.location.href = cta.getAttribute('href') || 'register.html';
+                }
+            });
+        }
+    </script>
     <script src="js/main.js"></script>
 </body>
 </html>

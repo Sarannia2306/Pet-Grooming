@@ -211,7 +211,7 @@ function drawUsers(list){
       <td><span class="badge">${escapeHtml(u.role || 'user')}</span></td>
       <td>
         <button class="btn" data-view-user="${u.id}"><i class="fa fa-eye"></i> View</button>
-        <button class="btn" data-deactivate="${u.id}"><i class="fa fa-user-slash"></i> Deactivate</button>
+        <button class="btn" data-delete-user="${u.id}"><i class="fa fa-trash"></i> Delete</button>
       </td>
     </tr>
   `).join('');
@@ -224,10 +224,10 @@ function drawUsers(list){
       if (user) openUserModal(user);
     });
   });
-  tbody.querySelectorAll('[data-deactivate]')?.forEach(btn => {
+  tbody.querySelectorAll('[data-delete-user]')?.forEach(btn => {
     btn.addEventListener('click', async () => {
-      const id = btn.getAttribute('data-deactivate');
-      await tryDeactivateUser(id);
+      const id = btn.getAttribute('data-delete-user');
+      await tryDeleteUser(id);
     });
   });
 }
@@ -399,6 +399,127 @@ function filterUsers(){
 const exportUsersBtn = document.getElementById('exportUsers');
 exportUsersBtn?.addEventListener('click', () => exportCSV(usersCache, 'users.csv'));
 
+// ---------- Staff Management ----------
+let staffCache = [];
+async function renderStaff(){
+  staffCache = await fetchList('admin');
+  // Normalize legacy fields so UI shows correct values
+  staffCache = staffCache.map(s => ({
+    ...s,
+    name: s.name || s.fullName || '',
+    position: s.position || s.role || ''
+  }));
+  drawStaff(staffCache);
+}
+
+function drawStaff(list){
+  const tbody = document.getElementById('staffTbody');
+  if (!tbody) return;
+  if (!list || list.length === 0){
+    tbody.innerHTML = `<tr><td colspan="6"><span class="muted">No staff yet.</span></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = list.map(s => `
+    <tr>
+      <td>${escapeHtml(s.name || s.fullName || '')}</td>
+      <td>${escapeHtml(s.phone || '')}</td>
+      <td>${escapeHtml(s.email || '')}</td>
+      <td>${escapeHtml(s.position || '')}</td>
+      <td><span class="badge">admin</span></td>
+      <td>
+        <button class="btn" data-edit-staff="${escapeHtml(s.id||'')}"><i class="fa fa-pen"></i> Edit</button>
+        <button class="btn" data-deactivate-staff="${escapeHtml(s.id||'')}"><i class="fa fa-user-slash"></i> Deactivate</button>
+      </td>
+    </tr>
+  `).join('');
+
+  tbody.querySelectorAll('[data-edit-staff]')?.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.getAttribute('data-edit-staff');
+      const s = staffCache.find(x => String(x.id) === String(id));
+      openStaffModal(s);
+    });
+  });
+  tbody.querySelectorAll('[data-deactivate-staff]')?.forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const id = btn.getAttribute('data-deactivate-staff');
+      await tryDeactivateStaff(id);
+    });
+  });
+}
+
+// Helpers
+async function tryDeleteUser(id){
+  if (!id) return;
+  if (!confirm('Delete this user? This will remove their profile from the database.')) return;
+  try {
+    await set(ref(database, `users/${id}`), null);
+    usersCache = usersCache.filter(u => String(u.id) !== String(id));
+    drawUsers(usersCache);
+    showToast('success', 'Deleted', 'User removed');
+  } catch(e){ console.error(e); showToast('error', 'Failed', 'Could not delete user'); }
+}
+
+async function tryDeactivateStaff(id){
+  if (!id) return;
+  if (!confirm('Deactivate this staff account? They will not be able to access admin.')) return;
+  try {
+    await update(ref(database, `admin/${id}`), { status: 'inactive' });
+    staffCache = staffCache.map(s => String(s.id) === String(id) ? { ...s, status: 'inactive' } : s);
+    drawStaff(staffCache);
+    showToast('success', 'Deactivated', 'Staff has been deactivated');
+  } catch(e){ console.error(e); showToast('error', 'Failed', 'Could not deactivate staff'); }
+}
+
+// Staff modal
+const staffModal = document.getElementById('staffModal');
+const staffModalClose = document.getElementById('staffModalClose');
+const staffCancel = document.getElementById('staffCancel');
+const staffForm = document.getElementById('staffForm');
+const staffIdEl = document.getElementById('staffId');
+const staffFullNameEl = document.getElementById('staffFullName');
+const staffPhoneEl = document.getElementById('staffPhone');
+const staffEmailEl = document.getElementById('staffEmail');
+const staffPositionEl = document.getElementById('staffPosition');
+
+function openStaffModal(data){
+  staffIdEl.value = data?.id || '';
+  staffFullNameEl.value = data?.name || data?.fullName || '';
+  staffPhoneEl.value = data?.phone || '';
+  staffEmailEl.value = data?.email || '';
+  if (staffPositionEl) staffPositionEl.value = data?.position || 'Manager';
+  staffModal?.setAttribute('aria-hidden', 'false');
+  staffModal?.classList.add('open');
+}
+function closeStaffModal(){
+  staffModal?.setAttribute('aria-hidden', 'true');
+  staffModal?.classList.remove('open');
+}
+staffModalClose?.addEventListener('click', closeStaffModal);
+staffCancel?.addEventListener('click', closeStaffModal);
+staffModal?.addEventListener('click', (e) => { if (e.target === staffModal) closeStaffModal(); });
+
+staffForm?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const existingId = staffIdEl.value;
+  const profile = {
+    name: staffFullNameEl.value.trim(),
+    phone: staffPhoneEl.value.trim(),
+    email: staffEmailEl.value.trim(),
+    position: staffPositionEl?.value || '',
+    role: 'admin',
+    status: 'active'
+  };
+  try {
+    if (!existingId) { showToast('error', 'Not allowed', 'Creating staff is disabled. Ask staff to self-register.'); return; }
+    // Update existing staff profile under admin/{uid}
+    await update(ref(database, `admin/${existingId}`), profile);
+    staffCache = staffCache.map(x => String(x.id) === String(existingId) ? { ...x, ...profile } : x);
+    drawStaff(staffCache);
+    closeStaffModal();
+    showToast('success', 'Saved', 'Staff saved');
+  } catch(e){ console.error(e); showToast('error', 'Failed', e?.message || 'Could not save staff'); }
+});
 // ---------- Pets ----------
 async function renderPets(){
   // Try pets/ then fallback to users/*/pets
@@ -1009,10 +1130,43 @@ function drawPayments(list){
       <td><span class="badge">${escapeHtml(p.status || 'pending')}</span></td>
       <td>${formatDate(p.createdAt || p.date)}</td>
       <td>
-        <button class="btn"><i class="fa fa-rotate-left"></i> Refund</button>
+        <button class="btn" data-view-invoice="${escapeHtml(p.id||'')}"><i class="fa fa-file-pdf"></i> View</button>
       </td>
     </tr>
   `).join('');
+
+  // Wire invoice view
+  tbody.querySelectorAll('[data-view-invoice]')?.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.getAttribute('data-view-invoice');
+      const p = paymentsCache.find(x => String(x.id||'') === String(id));
+      openInvoiceWindow(p);
+    });
+  });
+}
+
+function openInvoiceWindow(p){
+  if (!p) { showToast('error', 'Not found', 'Payment not found'); return; }
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"/><title>Invoice ${escapeHtml(p.id||'')}</title>
+  <style>body{font-family:Poppins,Arial,sans-serif;padding:24px;color:#111} h1{font-size:20px;margin:0 0 8px} .muted{color:#667085} table{width:100%;border-collapse:collapse;margin-top:16px} th,td{padding:8px;border-bottom:1px solid #eee;text-align:left} .right{text-align:right} .badge{display:inline-block;padding:4px 8px;border-radius:8px;background:#eef;color:#334;}</style>
+  </head><body>
+  <h1>Payment Receipt</h1>
+  <div class="muted">Receipt ID: ${escapeHtml(p.id||'')}</div>
+  <div class="muted">Date: ${formatDate(p.createdAt || p.date)}</div>
+  <table>
+    <tr><th>Booking</th><td>${escapeHtml(p.bookingId || p.booking || '')}</td></tr>
+    <tr><th>User</th><td>${escapeHtml(p.userEmail || p.user || '')}</td></tr>
+    <tr><th>Status</th><td><span class="badge">${escapeHtml(p.status||'paid')}</span></td></tr>
+    <tr><th>Amount</th><td class="right">${price(p.amount)}</td></tr>
+  </table>
+  <p class="muted">Use your browser's Print to save as PDF.</p>
+  <script>window.onload=()=>window.print()</script>
+  </body></html>`;
+  const w = window.open('', '_blank');
+  if (!w) return;
+  w.document.open();
+  w.document.write(html);
+  w.document.close();
 }
 
 // ---------- Reports ----------
@@ -1249,10 +1403,10 @@ async function loadAllSections(){
     renderMetrics(),
     renderUsers(),
     renderPets(),
+    renderStaff(),
     renderAppointments(),
     renderServices(),
     renderPayments(),
-    renderReviews(),
     loadContent(),
     loadSettings()
   ]);

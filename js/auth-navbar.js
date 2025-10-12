@@ -6,14 +6,18 @@ const auth = getAuth(app);
 
 function renderLoggedOut(container) {
   container.innerHTML = `
-    <a href="login.html" class="btn btn-outline" id="navLogin">Login</a>
-    <a href="register.html" class="btn btn-primary" id="navSignup">Sign Up</a>
+    <a href="login.html" class="btn btn-outline" id="navLogin">
+      <i class="fas fa-sign-in-alt"></i> Login
+    </a>
+    <a href="register.html" class="btn btn-primary" id="navSignup">
+      <i class="fas fa-user-plus"></i> Sign Up
+    </a>
   `;
 }
 
 function renderLoggedIn(container) {
   container.innerHTML = `
-    <a href="profile.html" class="btn btn-outline" id="navDashboard">
+    <a href="dashboard.html" class="btn btn-outline" id="navDashboard">
       <i class="fas fa-user"></i> Dashboard
     </a>
     <a href="#" id="logoutBtn" class="btn btn-outline">

@@ -53,10 +53,10 @@ document.addEventListener('DOMContentLoaded', () => {
 // Global Variables for Models
 // ======================
 let petTypeModel, breedModel, catBreedModel, sizeModel; // Global models
-let petTypeLabels = null; // e.g., ["dog","cat"]
-let breedLabels = null;   // DOG labels e.g., ["Labrador","Beagle",...]
-let catBreedLabels = null;// CAT labels e.g., ["American Shorthair",...]
-let sizeLabels = null;    // e.g., ["small","medium","large"]
+let petTypeLabels = null; // ["dog","cat"]
+let breedLabels = null;   // ["Labrador","Beagle",...]
+let catBreedLabels = null;// ["American Shorthair",...]
+let sizeLabels = null;    // ["small","medium","large"]
 
 // ======================
 // Load the Models
@@ -75,8 +75,7 @@ async function loadJsonSafe(url) {
 async function loadModels() {
     petTypeModel = await tf.loadLayersModel('/models/pet_type_model/model.json');
     breedModel = await tf.loadLayersModel('/models/dog_breeds_model/model.json');  // Dog breeds
-    // Optional: cat breed model
-    try { catBreedModel = await tf.loadLayersModel('/models/cat_breeds_model/model.json'); } catch (e) { console.warn('Cat breed model not found', e); }
+    try { catBreedModel = await tf.loadLayersModel('/models/cat_breeds_model/model.json'); } catch (e) { console.warn('Cat breed model not found', e); } // Cat breed model
     sizeModel = await tf.loadLayersModel('/models/pet_size_model/model.json');
     // Try to load label files placed next to models
     petTypeLabels = await loadJsonSafe('/models/pet_type_model/labels.json');
@@ -298,7 +297,7 @@ async function handleAddPet(e) {
             age: ageInput.value ? parseFloat(ageInput.value) : null,
             weight: weightInput.value ? parseFloat(weightInput.value) : null,
             color: colorInput.value.trim(),
-            specialNotes: specialNotesInput.value.trim(),
+            specialNotes: specialNotesInput ? specialNotesInput.value.trim() : '',
             photoURL: null, // will be set after upload if available
             ownerId: user.uid,
             createdAt: new Date().toISOString(),

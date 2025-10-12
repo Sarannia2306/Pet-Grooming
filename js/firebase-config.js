@@ -46,6 +46,32 @@ const firebaseConfig = {
     measurementId: "G-QC2X11MK73"
 };
 
+// Create a staff Firebase Auth user without affecting the current session,
+// and save their admin profile at admin/{uid}.
+export const createStaffAuthAndProfile = async (email, password, profile) => {
+    const secondary = initializeApp(firebaseConfig, 'Secondary');
+    const secondaryAuth = getAuth(secondary);
+    try {
+        const cred = await createUserWithEmailAndPassword(secondaryAuth, email, password);
+        const uid = cred.user.uid;
+        const adminProfile = {
+            name: profile?.name || '',
+            email,
+            phone: profile?.phone || '',
+            role: profile?.role || 'admin',
+            status: 'active',
+            createdAt: new Date().toISOString()
+        };
+        await set(ref(database, `admin/${uid}`), adminProfile);
+        try { await sendEmailVerification(cred.user); } catch {}
+        return { success: true, uid };
+    } catch (e) {
+        return { success: false, error: e?.message || 'Failed to create staff account', code: e?.code };
+    } finally {
+        try { await secondaryAuth.signOut(); } catch {}
+    }
+};
+
 // Admin-only Sign In
 export const signInAdmin = async (email, password) => {
     try {
@@ -65,7 +91,8 @@ export const signInAdmin = async (email, password) => {
         }
         const profile = snap.val() || {};
         const role = String(profile?.role || '').toLowerCase();
-        if (role !== 'admin' && role !== 'superadmin'){
+        const allowed = ['superadmin','admin','manager / owner','pet groomer','grooming assistant / bather','receptionist','pet care attendant'];
+        if (!allowed.includes(role)){
             try { await auth.signOut(); } catch {}
             return { success: false, error: 'Insufficient role' };
         }

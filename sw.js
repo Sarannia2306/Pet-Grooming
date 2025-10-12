@@ -1,5 +1,5 @@
-// Service Worker for PawfectCare
-const CACHE_NAME = 'pawfectcare-v1';
+// Service Worker for SnugglePaw
+const CACHE_NAME = 'SnugglePaw-v1';
 const urlsToCache = [
   './',
   './index.html',

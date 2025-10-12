@@ -1,7 +1,7 @@
 /* About Page Styles */
 .about-hero {
-    background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), 
-                url('https://images.unsplash.com/photo-1583511655826-057004d7880d?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80') 
+    background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), 
+                url('../../images/about1.jpg') 
                 no-repeat center center/cover;
     color: white;
     text-align: center;
@@ -12,15 +12,17 @@
 .about-hero h1 {
     font-size: 3rem;
     margin-bottom: 1rem;
+    color: #fff;
 }
 
 .about-hero p {
     font-size: 1.2rem;
     max-width: 700px;
-    margin: 0 auto;
+    margin: 0 auto 2rem;
     color: rgba(255, 255, 255, 0.9);
 }
 
+/* Our Story Section */
 .our-story {
     padding: 100px 0;
     background-color: white;
@@ -117,6 +119,7 @@
     margin: 0;
 }
 
+/* Our Team Section */
 .our-team {
     padding: 100px 0;
     background-color: #f8f9fa;
@@ -207,6 +210,7 @@
     transform: translateY(-3px);
 }
 
+/* Our Values Section */
 .our-values {
     padding: 100px 0;
     background: white;
@@ -264,6 +268,7 @@
     margin: 0;
 }
 
+/* CTA Section */
 .cta-section {
     padding: 80px 0;
     background: linear-gradient(135deg, #2ec4b6 0%, #1a7f7a 100%);
@@ -323,72 +328,29 @@
     margin-right: 8px;
 }
 
-/* Penang, Malaysia specific styles */
-.contact-info {
-    background: #f8f9fa;
-    padding: 2rem;
-    border-radius: 15px;
-    margin-top: 2rem;
-}
-
-.contact-info h3 {
-    color: #2c3e50;
-    margin-bottom: 1rem;
-}
-
-.contact-info p {
-    color: #7f8c8d;
-    margin-bottom: 0.5rem;
-}
-
-/* Location specific to Penang */
-.location-info {
-    margin-top: 2rem;
-    padding: 1.5rem;
-    background: #f8f9fa;
-    border-radius: 15px;
-}
-
-.location-info h3 {
-    color: #2c3e50;
-    margin-bottom: 1rem;
-}
-
-.location-info p {
-    color: #7f8c8d;
-    margin-bottom: 0.5rem;
-}
-
-.location-info i {
-    color: #2ec4b6;
-    margin-right: 10px;
-    width: 20px;
-    text-align: center;
-}
-
-/* Responsive styles */
+/* Responsive Styles */
 @media (max-width: 992px) {
     .story-content {
         grid-template-columns: 1fr;
         gap: 2rem;
     }
-    
+
     .story-image {
         order: -1;
         max-width: 600px;
         margin: 0 auto;
     }
-    
+
     .story-stats {
         grid-template-columns: 1fr;
         gap: 1.5rem;
     }
-    
+
     .cta-buttons {
         flex-direction: column;
         align-items: center;
     }
-    
+
     .btn {
         width: 100%;
         max-width: 250px;
@@ -400,20 +362,20 @@
     .about-hero h1 {
         font-size: 2.2rem;
     }
-    
+
     .about-hero p {
         font-size: 1rem;
         padding: 0 1rem;
     }
-    
+
     .section-header h2 {
         font-size: 2rem;
     }
-    
+
     .cta-content h2 {
         font-size: 2rem;
     }
-    
+
     .cta-content p {
         font-size: 1rem;
         padding: 0 1rem;
@@ -424,11 +386,11 @@
     .about-hero {
         padding: 120px 0 80px;
     }
-    
+
     .about-hero h1 {
         font-size: 1.8rem;
     }
-    
+
     .section-header h2 {
         font-size: 1.8rem;
     }

@@ -537,7 +537,7 @@ p {
     overflow: hidden;
     box-shadow: var(--box-shadow);
 }
-
+s
 .about-image img {
     transition: var(--transition);
 }
@@ -569,7 +569,7 @@ p {
 
 .cta-section .btn {
     background-color: white;
-    color: var(--primary-color);
+    color: var(--primary-color) !important;
     font-weight: 600;
     padding: 1rem 2.5rem;
     font-size: 1.1rem;
@@ -578,6 +578,18 @@ p {
 .cta-section .btn:hover {
     transform: translateY(-3px);
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+.cta-section .btn.btn-primary {
+    background-color: #ffffff !important;
+    color: var(--primary-color) !important;
+    border: 2px solid #ffffff;
+}
+
+.cta-section .btn.btn-primary:hover {
+    background-color: #ffffff !important;
+    color: var(--primary-dark) !important;
+    border-color: #ffffff !important;
 }
 
 /* Footer */

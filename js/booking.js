@@ -377,6 +377,19 @@ function setupForm(userId) {
                             sizeSelect.appendChild(opt);
                         });
                         sizeSelect.disabled = false;
+                        // Auto-select user's saved pet size for grooming
+                        try {
+                            const normalizedPetSize = String((pet?.size || '')).toLowerCase();
+                            const isGrooming = String(category).toLowerCase() === 'grooming';
+                            if (isGrooming && normalizedPetSize) {
+                                const match = Array.from(sizeSelect.options).find(o => String(o.value).toLowerCase() === normalizedPetSize);
+                                if (match) {
+                                    sizeSelect.value = match.value;
+                                    // Trigger change to refresh pricing/details/time enabling
+                                    sizeSelect.dispatchEvent(new Event('change'));
+                                }
+                            }
+                        } catch (e) { /* no-op */ }
                     }
                 }
             } else {
@@ -583,7 +596,8 @@ function setupForm(userId) {
             const stayDays = (category === 'boarding' && endDateVal) ? computeStayDays(date, endDateVal) : '';
             const stayParam = encodeURIComponent(String(stayDays || ''));
             const speciesParam = encodeURIComponent(pet.type || pet.petType || '');
-            window.location.href = `payment-confirm.html?pet=${encodeURIComponent(pet.name)}&service=${encodeURIComponent(serviceName)}&type=${encodeURIComponent(category)}&size=${sizeParam}&date=${date}&endDate=${endParam}&stayDays=${stayParam}&time=${time}&amount=${price}&species=${speciesParam}`;
+            const notesVal = encodeURIComponent(document.getElementById('notes')?.value?.trim() || '');
+            window.location.href = `payment-confirm.html?pet=${encodeURIComponent(pet.name)}&service=${encodeURIComponent(serviceName)}&type=${encodeURIComponent(category)}&size=${sizeParam}&date=${date}&endDate=${endParam}&stayDays=${stayParam}&time=${time}&amount=${price}&species=${speciesParam}&notes=${notesVal}`;
             
         } catch (error) {
             console.error('Error processing booking:', error);

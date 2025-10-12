@@ -3,407 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Contact Us - PawfectCare</title>
+    <title>Contact Us - SnugglePaw</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/pages/contact.css">
-    <style>
-        /* Contact Hero */
-        .contact-hero {
-            background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), 
-                        url('https://images.unsplash.com/photo-1583511655826-057004d7880d?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80') 
-                        no-repeat center center/cover;
-            color: white;
-            text-align: center;
-            padding: 150px 0 100px;
-            margin-top: 80px;
-        }
-        
-        .contact-hero h1 {
-            font-size: 3rem;
-            margin-bottom: 1rem;
-        }
-        
-        .contact-hero p {
-            font-size: 1.2rem;
-            max-width: 700px;
-            margin: 0 auto;
-            color: rgba(255, 255, 255, 0.9);
-        }
-        
-        /* Contact Section */
-        .contact-section {
-            padding: 100px 0;
-            background-color: white;
-        }
-        
-        .section-header {
-            text-align: center;
-            margin-bottom: 4rem;
-        }
-        
-        .section-header h2 {
-            font-size: 2.5rem;
-            color: #2c3e50;
-            margin-bottom: 1rem;
-            position: relative;
-            display: inline-block;
-        }
-        
-        .section-header h2::after {
-            content: '';
-            position: absolute;
-            bottom: -10px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 80px;
-            height: 4px;
-            background: #2ec4b6;
-            border-radius: 2px;
-        }
-        
-        .section-header p {
-            color: #7f8c8d;
-            max-width: 700px;
-            margin: 0 auto;
-            font-size: 1.1rem;
-            line-height: 1.8;
-        }
-        
-        .contact-container {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 4rem;
-            margin-top: 3rem;
-        }
-        
-        .contact-info {
-            padding: 2rem 0;
-        }
-        
-        .info-item {
-            display: flex;
-            margin-bottom: 2rem;
-            align-items: flex-start;
-        }
-        
-        .info-icon {
-            width: 50px;
-            height: 50px;
-            background: rgba(46, 196, 182, 0.1);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #2ec4b6;
-            font-size: 1.2rem;
-            margin-right: 1.5rem;
-            flex-shrink: 0;
-        }
-        
-        .info-content h3 {
-            font-size: 1.3rem;
-            color: #2c3e50;
-            margin: 0 0 0.5rem;
-        }
-        
-        .info-content p, 
-        .info-content a {
-            color: #7f8c8d;
-            margin: 0;
-            line-height: 1.6;
-            text-decoration: none;
-            display: block;
-        }
-        
-        .info-content a:hover {
-            color: #2ec4b6;
-        }
-        
-        .social-links {
-            display: flex;
-            gap: 1rem;
-            margin-top: 1rem;
-        }
-        
-        .social-links a {
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            background: #f8f9fa;
-            color: #555;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.3s ease;
-        }
-        
-        .social-links a:hover {
-            background: #2ec4b6;
-            color: white;
-            transform: translateY(-3px);
-        }
-        
-        /* Contact Form */
-        .contact-form {
-            background: #f8f9fa;
-            padding: 2.5rem;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
-        }
-        
-        .form-group {
-            margin-bottom: 1.5rem;
-        }
-        
-        .form-group label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-weight: 500;
-            color: #2c3e50;
-        }
-        
-        .form-control {
-            width: 100%;
-            padding: 0.8rem 1rem;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            font-family: 'Poppins', sans-serif;
-            transition: border-color 0.3s ease, box-shadow 0.3s ease;
-        }
-        
-        .form-control:focus {
-            outline: none;
-            border-color: #2ec4b6;
-            box-shadow: 0 0 0 3px rgba(46, 196, 182, 0.2);
-        }
-        
-        textarea.form-control {
-            min-height: 150px;
-            resize: vertical;
-        }
-        
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            padding: 0.8rem 2rem;
-            border-radius: 50px;
-            font-weight: 500;
-            text-decoration: none;
-            transition: all 0.3s ease;
-            font-size: 1rem;
-            border: none;
-            cursor: pointer;
-        }
-        
-        .btn-primary {
-            background: #2ec4b6;
-            color: white;
-        }
-        
-        .btn-primary:hover {
-            background: #25a89a;
-            transform: translateY(-3px);
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
-        }
-        
-        .btn i {
-            margin-right: 8px;
-        }
-        
-        /* Map */
-        .map-section {
-            height: 400px;
-            margin-top: 5rem;
-            border-radius: 15px;
-            overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-        }
-        
-        .map-section iframe {
-            width: 100%;
-            height: 100%;
-            border: none;
-        }
-        
-        /* FAQ Section */
-        .faq-section {
-            padding: 100px 0;
-            background-color: #f8f9fa;
-        }
-        
-        .faq-container {
-            max-width: 800px;
-            margin: 0 auto;
-        }
-        
-        .faq-item {
-            background: white;
-            border-radius: 10px;
-            margin-bottom: 1rem;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
-            overflow: hidden;
-        }
-        
-        .faq-question {
-            padding: 1.5rem;
-            cursor: pointer;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-weight: 500;
-            color: #2c3e50;
-            transition: all 0.3s ease;
-        }
-        
-        .faq-question:hover {
-            color: #2ec4b6;
-        }
-        
-        .faq-question i {
-            transition: transform 0.3s ease;
-        }
-        
-        .faq-answer {
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.3s ease;
-            background: #f8f9fa;
-        }
-        
-        .faq-answer-content {
-            padding: 0 1.5rem 1.5rem;
-            color: #7f8c8d;
-            line-height: 1.7;
-        }
-        
-        .faq-item.active .faq-question {
-            color: #2ec4b6;
-        }
-        
-        .faq-item.active .faq-question i {
-            transform: rotate(180deg);
-        }
-        
-        .faq-item.active .faq-answer {
-            max-height: 500px;
-        }
-        
-        /* CTA Section */
-        .cta-section {
-            padding: 80px 0;
-            background: linear-gradient(135deg, #2ec4b6 0%, #1a7f7a 100%);
-            color: white;
-            text-align: center;
-        }
-        
-        .cta-content h2 {
-            font-size: 2.5rem;
-            margin-bottom: 1.5rem;
-            color: white;
-        }
-        
-        .cta-content p {
-            font-size: 1.2rem;
-            max-width: 700px;
-            margin: 0 auto 2rem;
-            color: rgba(255, 255, 255, 0.9);
-        }
-        
-        .btn-white {
-            background: white;
-            color: #2ec4b6;
-            border: 2px solid white;
-        }
-        
-        .btn-white:hover {
-            background: transparent;
-            color: white;
-        }
-        
-        /* Responsive */
-        @media (max-width: 992px) {
-            .contact-container {
-                grid-template-columns: 1fr;
-                gap: 2rem;
-            }
-            
-            .map-section {
-                margin-top: 3rem;
-            }
-            
-            .contact-form {
-                margin-top: 2rem;
-            }
-        }
-        
-        @media (max-width: 768px) {
-            .contact-hero h1 {
-                font-size: 2.2rem;
-            }
-            
-            .contact-hero p {
-                font-size: 1rem;
-                padding: 0 1rem;
-            }
-            
-            .section-header h2 {
-                font-size: 2rem;
-            }
-            
-            .cta-content h2 {
-                font-size: 2rem;
-            }
-            
-            .cta-content p {
-                font-size: 1rem;
-                padding: 0 1rem;
-            }
-            
-            .info-item {
-                flex-direction: column;
-                text-align: center;
-            }
-            
-            .info-icon {
-                margin: 0 auto 1rem;
-            }
-            
-            .social-links {
-                justify-content: center;
-            }
-        }
-        
-        @media (max-width: 576px) {
-            .contact-hero {
-                padding: 120px 0 80px;
-            }
-            
-            .contact-hero h1 {
-                font-size: 1.8rem;
-            }
-            
-            .section-header h2 {
-                font-size: 1.8rem;
-            }
-            
-            .contact-form {
-                padding: 1.5rem;
-            }
-            
-            .btn {
-                width: 100%;
-                justify-content: center;
-            }
-        }
-    </style>
+    
 </head>
 <body>
     <!-- Navigation -->
     <nav class="navbar">
         <div class="container">
-            <a href="index.html" class="logo">Pawfect<span>Care</span></a>
+            <a href="index.html" class="logo">Snuggle<span>Paw</span></a>
             <div class="nav-links">
                 <a href="index.html">Home</a>
                 <a href="services.html">Services</a>
@@ -472,8 +83,8 @@
                         </div>
                         <div class="info-content">
                             <h3>Email Address</h3>
-                            <p>info@pawfectcare.com.my</p>
-                            <p>support@pawfectcare.com.my</p>
+                            <p>info@SnugglePaw.com.my</p>
+                            <p>support@SnugglePaw.com.my</p>
                             <p style="margin-top: 0.5rem;">We typically respond within 24 hours</p>
                             
                             <div class="social-links">
@@ -550,7 +161,7 @@
                     </div>
                     <div class="faq-answer">
                         <div class="faq-answer-content">
-                            <p>We offer a comprehensive range of pet care services including professional grooming, daycare, boarding, and veterinary care. Our grooming services include baths, haircuts, nail trims, ear cleaning, and teeth brushing. Our daycare provides a safe and fun environment for your pets to socialize, and our boarding facilities offer comfortable accommodations for when you're away.</p>
+                            <p>We offer a comprehensive range of pet Paw services including professional grooming, dayPaw, boarding, and veterinary Paw. Our grooming services include baths, haircuts, nail trims, ear cleaning, and teeth brushing. Our dayPaw provides a safe and fun environment for your pets to socialize, and our boarding facilities offer comfortable accommodations for when you're away.</p>
                         </div>
                     </div>
                 </div>
@@ -614,8 +225,8 @@
     <section class="cta-section">
         <div class="container">
             <div class="cta-content">
-                <h2>Ready to Experience the PawfectCare Difference?</h2>
-                <p>Join our community of happy pets and their owners who trust us with their pet care needs.</p>
+                <h2>Ready to Experience the SnugglePaw Difference?</h2>
+                <p>Join our community of happy pets and their owners who trust us with their pet Paw needs.</p>
                 <a href="booking.html" class="btn btn-white">
                     <i class="fas fa-calendar-alt"></i> Book an Appointment
                 </a>
@@ -628,8 +239,8 @@
         <div class="container">
             <div class="footer-content">
                 <div class="footer-about">
-                    <h3>PawfectCare</h3>
-                    <p>Professional pet care services with AI-powered recognition for a safer, more personalized experience.</p>
+                    <h3>SnugglePaw</h3>
+                    <p>Professional pet Paw services with AI-powered recognition for a safer, more personalized experience.</p>
                     <div class="social-links">
                         <a href="#"><i class="fab fa-facebook-f"></i></a>
                         <a href="#"><i class="fab fa-twitter"></i></a>
@@ -650,7 +261,7 @@
                     <h4>Services</h4>
                     <ul>
                         <li><a href="services.html#grooming">Grooming</a></li>
-                        <li><a href="services.html#daycare">Daycare</a></li>
+                        <li><a href="services.html#dayPaw">DayPaw</a></li>
                         <li><a href="services.html#boarding">Boarding</a></li>
                         <li><a href="booking.html">Book Now</a></li>
                     </ul>
@@ -660,12 +271,12 @@
                     <ul>
                         <li><i class="fas fa-map-marker-alt"></i> 123 Jalan Sultan Ahmad Shah, 10050 George Town, Penang, Malaysia</li>
                         <li><i class="fas fa-phone"></i> +60 4-123 4567</li>
-                        <li><i class="fas fa-envelope"></i> info@pawfectcare.com.my</li>
+                        <li><i class="fas fa-envelope"></i> info@SnugglePaw.com.my</li>
                     </ul>
                 </div>
             </div>
             <div class="footer-bottom">
-                <p>&copy; 2023 PawfectCare. All rights reserved.</p>
+                <p>&copy; 2023 SnugglePaw. All rights reserved.</p>
                 <div class="footer-legal">
                     <a href="#">Privacy Policy</a>
                     <a href="#">Terms of Service</a>
@@ -674,6 +285,7 @@
         </div>
     </footer>
 
+    <script type="module" src="js/auth-navbar.js"></script>
     <script src="js/main.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {

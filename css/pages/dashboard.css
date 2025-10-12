@@ -601,6 +601,13 @@ dashboard-header h1 {
     border-bottom: 1px solid #f0f2f5;
 }
 
+/* Actions row: status + cancel side-by-side */
+.appointment-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
 .appointment-item:last-child {
     border-bottom: none;
 }
