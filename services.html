@@ -10,6 +10,11 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/pages/services.css">
+    <link rel="stylesheet" href="css/pages/dashboard.css">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <!-- Swiper CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@8/swiper-bundle.min.css">
+
 </head>
 <body>
     <!-- Navigation -->
@@ -23,8 +28,18 @@
                 <a href="about.html">About Us</a>
                 <a href="contact.html">Contact</a>
                 <div class="auth-buttons">
-                    <a href="login.html" class="btn btn-outline">Login</a>
-                    <a href="register.html" class="btn btn-primary">Sign Up</a>
+                    <div id="loggedInUser" style="display: none;">
+                        <a href="dashboard.html" class="btn btn-outline" style="margin-right: 10px;">
+                            <i class="fas fa-users"></i> Dashboard
+                        </a>
+                        <a href="#" id="logoutBtn" class="btn btn-primary">
+                            <i class="fas fa-sign-out-alt"></i> Logout
+                        </a>
+                    </div>
+                    <div id="guestUser">
+                        <a href="login.html" class="btn btn-outline">Login</a>
+                        <a href="register.html" class="btn btn-primary">Sign Up</a>
+                    </div>
                 </div>
             </div>
             <button class="hamburger">
@@ -83,7 +98,7 @@
                     </div>
                     
                     <h3>Grooming Packages</h3>
-                    <div id="groomingPricing" class="pricing-table-wrap grid-2"></div>
+                    <div id="groomingPricing" class="pricing-table-wrap"></div>
                     
                     <a href="booking.html" class="btn btn-primary book-cta" data-service="grooming" style="margin-top: 1.5rem;">Book Grooming</a>
                 </div>
@@ -141,7 +156,25 @@
                     <a href="booking.html" class="btn btn-primary book-cta" data-service="daycare" style="margin-top: 1.5rem;">Book Daycare</a>
                 </div>
                 <div class="service-image">
-                    <img src="images/service4.jpeg" alt="Pet Daycare">
+                    <div class="daycare-carousel swiper">
+                        <div class="swiper-wrapper">
+                            <div class="swiper-slide">
+                                <img src="images/cats-daycare1.jpg" alt="Cats Playing in Daycare">
+                            </div>
+                            <div class="swiper-slide">
+                                <img src="images/cats-daycare2.jpg" alt="Cats Socializing">
+                            </div>
+                            <div class="swiper-slide">
+                                <img src="images/dogs-daycare1.jpg" alt="Dogs Playing in Daycare">
+                            </div>
+                            <div class="swiper-slide">
+                                <img src="images/dogs-daycare2.jpg" alt="Dogs Having Fun">
+                            </div>
+                        </div>
+                        <div class="swiper-pagination daycare-pagination"></div>
+                        <div class="swiper-button-prev daycare-prev"></div>
+                        <div class="swiper-button-next daycare-next"></div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -188,7 +221,49 @@
                     
                 </div>
                 <div class="service-image">
-                    <img src="images/service3.jpg" alt="Pet Boarding">
+                    <div class="boarding-carousel swiper">
+                        <div class="swiper-wrapper">
+                            <div class="swiper-slide">
+                                <div class="slide-content">
+                                    <img src="images/cat-luxury.png" alt="Luxury Cat Suite">
+                                    <div class="slide-caption">Cat Luxury Villa</div>
+                                </div>
+                            </div>
+                            <div class="swiper-slide">
+                                <div class="slide-content">
+                                    <img src="images/dog-luxury.png" alt="Luxury Dog Suite">
+                                    <div class="slide-caption">Dog Luxury Villa</div>
+                                </div>
+                            </div>
+                            <div class="swiper-slide">
+                                <div class="slide-content">
+                                    <img src="images/cat-deluxe.png" alt="Deluxe Cat Suite">
+                                    <div class="slide-caption">Cat Deluxe Suite</div>
+                                </div>
+                            </div>
+                            <div class="swiper-slide">
+                                <div class="slide-content">
+                                    <img src="images/dog-deluxe.png" alt="Deluxe Dog Suite">
+                                    <div class="slide-caption">Dog Deluxe Suite</div>
+                                </div>
+                            </div>
+                            <div class="swiper-slide">
+                                <div class="slide-content">
+                                    <img src="images/cat-standard.png" alt="Comfort Cat Suite">
+                                    <div class="slide-caption">Cat Standard Room</div>
+                                </div>
+                            </div>
+                            <div class="swiper-slide">
+                                <div class="slide-content">
+                                    <img src="images/dog-standard.png" alt="Comfort Dog Suite">
+                                    <div class="slide-caption">Dog Standard Room</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="swiper-pagination boarding-pagination"></div>
+                        <div class="swiper-button-prev boarding-prev"></div>
+                        <div class="swiper-button-next boarding-next"></div>
+                    </div>
                 </div>
             </div>
             
@@ -196,12 +271,12 @@
             <div class="packages">
                 <h3>Boarding Packages</h3>
                 <div id="boardingPricing" class="pricing-table-wrap grid-2"></div>
-                <div class="boarding-extras" style="margin-top: 1.5rem;">
-                    <p><strong>Additional Services:</strong></p>
-                    <ul style="list-style-type: disc; margin-left: 1.5rem;">
-                        <li>Daily Playtime: RM15/day</li>
-                        <li>Medication Administration: RM5/day</li>
-                        <li>Bath Before Pickup: RM25-40</li>
+                <div id="additionalServicesContainer" class="boarding-extras" style="margin-top: 2rem;">
+                    <h3>Additional Services</h3>
+                    <p>Enhance your pet's stay with our premium add-ons:</p></p>
+                    <ul class="additional-services-list" style="list-style-type: disc; margin-left: 1.5rem;">
+                        <!-- Additional services will be loaded here dynamically -->
+                        <li class="loading-text">Loading additional services...</li>
                     </ul>
                 </div>
                 <a href="booking.html" class="btn btn-primary book-cta" data-service="boarding" style="margin-top: 1.5rem;">Book Boarding</a>
@@ -257,7 +332,7 @@
                     <ul>
                         <li><i class="fas fa-map-marker-alt"></i> 123 Jalan Sultan Ahmad Shah, 10050 George Town, Penang, Malaysia</li>
                         <li><i class="fas fa-phone"></i> +60 4-123 4567</li>
-                        <li><i class="fas fa-envelope"></i> info@SnugglePaw.com.my</li>
+                        <li><i class="fas fa-envelope"></i> SnugglePaw.info@gmail.com</li>
                     </ul>
                 </div>
             </div>
@@ -271,8 +346,42 @@
         </div>
     </footer>
 
+    <!-- Swiper CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@8/swiper-bundle.min.css"/>
+    
+    <!-- Main scripts -->
+    <!-- Load non-module scripts first -->
+    <script src="https://cdn.jsdelivr.net/npm/swiper@8/swiper-bundle.min.js"></script>
+    
     <script type="module" src="js/auth-navbar.js"></script>
+    <script type="module">
+        import { getAuth } from 'https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js';
+        import { app } from './js/firebase-config.js';
+
+        const auth = getAuth(app);
+        const cta = document.getElementById('ctaGetStarted');
+        if (cta) {
+            cta.addEventListener('click', (e) => {
+                // Allow default link if anything fails
+                try {
+                    e.preventDefault();
+                    const user = auth.currentUser;
+                    if (user) {
+                        window.location.href = 'services.html';
+                    } else {
+                        window.location.href = 'register.html';
+                    }
+                } catch (err) {
+                    // Fallback to original href
+                    window.location.href = cta.getAttribute('href') || 'register.html';
+                }
+            });
+        }
+    </script>
+    
     <script type="module" src="js/services.js"></script>
-    <script src="js/main.js"></script>
+    <script type="module" src="js/main.js"></script>
+    <script src="js/services-carousel.js"></script>
+
 </body>
 </html>

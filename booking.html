@@ -2,15 +2,15 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Book Appointment - SnugglePaw</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/pages/booking.css">
+    <link rel="stylesheet" href="/css/components/multiselect.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/pages/booking.css">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="css/pages/dashboard.css">
     
 </head>
-<body>
+{{ ... }}
     <!-- Navigation -->
     <nav class="navbar">
         <div class="container">
@@ -93,15 +93,59 @@
                             <select id="time" class="form-control" required disabled>
                                 <option value="">Select a time</option>
                             </select>
+                            <small id="timeSlotNote" class="form-text" style="display: none; color: #666; margin-top: 5px;">
+                                <i class="fas fa-info-circle"></i> Choose your preferred drop-off time. You may pick up your pet anytime on the pick-up day.
+                            </small>
                         </div>
 
+                        <!-- Additional Services section -->
                         <div class="form-group" style="grid-column: 1 / -1;">
-                            <div id="serviceDetails" class="form-text" style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:12px; display:none;"></div>
+                            <label>Additional Services (Optional)</label>
+                            <div class="additional-services-container">
+                                <div class="service-item">
+                                    <label class="checkbox-container">
+                                        <input type="checkbox" id="selectAllServices">
+                                        <span class="checkmark"></span>
+                                        <span>Select All</span>
+                                    </label>
+                                </div>
+                                <div id="additionalServicesList" class="services-checkbox-list">
+                                    <div class="loading-services">Loading additional services...</div>
+                                </div>
+                                <div id="selectedServices" class="selected-services-container" style="display: none;">
+                                    <div class="selected-header">Selected Services</div>
+                                    <div id="selectedServicesList" class="selected-services-list"></div>
+                                    <div class="selected-total">
+                                        Total: <span id="additionalServicesTotal">RM 0.00</span>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
+
                         <div class="form-group" style="grid-column: 1 / -1;">
                             <label for="notes">Special Notes for Staff</label>
                             <textarea id="notes" class="form-control" rows="3" placeholder="Allergies, temperament, medical conditions, pickup instructions, etc."></textarea>
                         </div>
+
+                         <!-- Booking Summary -->
+                         <div class="form-group" style="grid-column: 1 / -1;">
+                            <div class="booking-summary">
+                                <h3>Booking Summary</h3>
+                                <div id="mainServiceSummary" class="main-service-summary" style="display: none;">
+                                    <div class="summary-header">Main Service</div>
+                                    <div id="mainServiceDetails" class="service-details"></div>
+                                </div>
+                                <div id="additionalServicesSummary" class="additional-services-summary" style="display: none;">
+                                    <div class="summary-header">Additional Services</div>
+                                    <div id="summarySelectedServicesList" class="selected-services-list"></div>
+                                </div>
+                                <div class="grand-total">
+                                    <div class="summary-header">Total Amount</div>
+                                    <div id="grandTotal" class="total-amount">RM 0.00</div>
+                                </div>
+                            </div>
+                        </div>
+                        
                     </div>
                     <div class="btn-row">
                         <button type="submit" id="bookingSubmitBtn" class="btn btn-primary">Continue to Payment</button>
@@ -148,7 +192,7 @@
                     <ul>
                         <li><i class="fas fa-map-marker-alt"></i> 123 Jalan Sultan Ahmad Shah, 10050 George Town, Penang, Malaysia</li>
                         <li><i class="fas fa-phone"></i> +60 4-123 4567</li>
-                        <li><i class="fas fa-envelope"></i> info@SnugglePaw.com.my</li>
+                        <li><i class="fas fa-envelope"></i> SnugglePaw.info@gmail.com</li>
                     </ul>
                 </div>
             </div>
@@ -167,13 +211,13 @@
     <script type="module" src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
     <script type="module" src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
     
-    <!-- Your Firebase configuration -->
+    <!-- Firebase configuration -->
     <script type="module" src="js/firebase-config.js"></script>
     
     <!-- Main scripts -->
-    <script type="module" src="js/auth-guard.js"></script>
-    <script type="module" src="js/auth-navbar.js"></script>
-    <script type="module" src="js/booking.js"></script>
-    <script src="js/main.js"></script>
+    <script type="module" src="/js/auth-guard.js"></script>
+    <script type="module" src="/js/auth-navbar.js"></script>
+    <script type="module" src="/js/booking.js"></script>
+    <script type="module" src="/js/main.js"></script>
 </body>
 </html>

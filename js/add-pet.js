@@ -315,19 +315,9 @@ async function handleAddPet(e) {
         const newPetRef = push(petsRef);
 
         try {
-            // Determine image source: file from dropzone or fallback to preview dataURL
-            let imageBlob = null;
-            if (petImageFile instanceof File) {
-                imageBlob = petImageFile;
-            } else if (petImagePreview && petImagePreview.src && petImagePreview.src.startsWith('data:')) {
-                const resp = await fetch(petImagePreview.src);
-                imageBlob = await resp.blob();
-            }
-
-            if (imageBlob) {
-                const storageRef = ref(storage, `pets/${newPetRef.key}/profile.jpg`);
-                await uploadBytes(storageRef, imageBlob);
-                petData.photoURL = await getDownloadURL(storageRef);
+            // Store image as data URL if available
+            if (petImagePreview && petImagePreview.src && petImagePreview.src.startsWith('data:')) {
+                petData.photoURL = petImagePreview.src;
             }
         } catch (imgErr) {
             console.error('Image upload failed; continuing without photoURL:', imgErr);

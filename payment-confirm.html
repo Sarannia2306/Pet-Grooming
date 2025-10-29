@@ -20,11 +20,6 @@
                 <a href="booking.html">Book Now</a>
                 <a href="about.html">About Us</a>
                 <a href="contact.html">Contact</a>
-                <div class="auth-buttons">
-                    <a href="profile.html" class="btn btn-outline">
-                        <i class="fas fa-user"></i> My Profile
-                    </a>
-                </div>
             </div>
             <button class="hamburger">
                 <span></span>
@@ -43,7 +38,12 @@
         </div>
         
         <div class="booking-summary">
-            <h2>Appointment Details</h2>
+            <div class="summary-header">
+                <h2>Appointment Details</h2>
+                <button id="backButton" class="btn btn-outline">
+                    <i class="fas fa-arrow-left"></i> Back to Booking
+                </button>
+            </div>
             
             <div class="booking-details">
                 <div class="detail-group">
@@ -91,9 +91,13 @@
                 </div>
             </div>
             
-            <!-- PayPal Buttons -->
-            <div class="payment-method">
-                <div id="paypal-buttons" style="max-width: 420px; margin: 0 auto;"></div>
+            <!-- Payment Actions -->
+            <div class="payment-actions">
+                <div id="paypal-buttons"></div>
+                <div class="payment-processing">
+                    <div class="spinner"></div>
+                    <p>Processing your payment...</p>
+                </div>
             </div>
             
             <div class="payment-success">
@@ -103,7 +107,6 @@
                 <div class="btn-container" style="margin-top: 20px;">
                     <a href="dashboard.html" class="btn btn-primary">Go to Dashboard</a>
                     <a href="booking.html" class="btn btn-outline">Book Another Appointment</a>
-                    <a href="#" id="downloadInvoiceBtn" class="btn btn-outline" style="display:none;">Download Invoice</a>
                 </div>
             </div>
         </div>
@@ -113,6 +116,61 @@
     <script src="https://www.paypal.com/sdk/js?client-id=Ab7qAX3zgshP7xG_TW3xvvOVqDNy2bz7L9fdPwZGkUc0AYmiElpi-45dJw-qPQ6f52uhTJP0-ATbmeRp&currency=MYR"></script>
 
     <script>
+        // Global function to get pet size from database
+        async function getPetSizeFromDatabase(petName) {
+            try {
+                // Import Firebase modules
+                const { getAuth, onAuthStateChanged } = await import('https://www.gstatic.com/firebasejs/10.1.0/firebase-auth.js');
+                const { getDatabase, ref, get } = await import('https://www.gstatic.com/firebasejs/10.1.0/firebase-database.js');
+                const { app } = await import('./js/firebase-config.js');
+                
+                const auth = getAuth(app);
+                const db = getDatabase(app);
+                
+                return new Promise((resolve) => {
+                    // Check if user is logged in
+                    onAuthStateChanged(auth, async (user) => {
+                        if (!user) {
+                            console.log('No user logged in');
+                            document.getElementById('petSize').textContent = 'Not specified';
+                            return resolve();
+                        }
+
+                        try {
+                            // Reference to the user's pets
+                            const userPetsRef = ref(db, `users/${user.uid}/pets`);
+                            
+                            // Get all pets
+                            const snapshot = await get(userPetsRef);
+                            if (snapshot.exists()) {
+                                const pets = snapshot.val();
+                                // Find the pet by name (case insensitive)
+                                const pet = Object.values(pets).find(p => 
+                                    p && p.name && p.name.toLowerCase() === petName.toLowerCase()
+                                );
+                                
+                                if (pet && pet.size) {
+                                    document.getElementById('petSize').textContent = pet.size;
+                                } else {
+                                    document.getElementById('petSize').textContent = 'Not specified';
+                                }
+                            } else {
+                                document.getElementById('petSize').textContent = 'Not specified';
+                            }
+                        } catch (error) {
+                            console.error('Error fetching pet size:', error);
+                            document.getElementById('petSize').textContent = 'Error loading';
+                        }
+                        resolve();
+                    });
+                });
+            } catch (error) {
+                console.error('Error loading Firebase modules:', error);
+                document.getElementById('petSize').textContent = 'Error loading';
+                return Promise.resolve();
+            }
+        }
+
         // Parse URL parameters to get booking details
         document.addEventListener('DOMContentLoaded', function() {
             const urlParams = new URLSearchParams(window.location.search);
@@ -128,9 +186,28 @@
                 service = decodeURIComponent(urlParams.get('service'));
                 document.getElementById('serviceType').textContent = service;
             }
-            if (urlParams.has('size')) {
-                const size = decodeURIComponent(urlParams.get('size')) || '-';
-                document.getElementById('petSize').textContent = size || '-';
+            if (urlParams.has('pet')) {
+                const petName = decodeURIComponent(urlParams.get('pet'));
+                // Get pet size from URL parameter
+                if (urlParams.has('size')) {
+                    const size = decodeURIComponent(urlParams.get('size'));
+                    if (size && size !== 'undefined') {
+                        // Display the size from URL parameter
+                        document.getElementById('petSize').textContent = size;
+                    } else if (window.getPetSizeFromDatabase) {
+                        // If no size in URL, try to get from database
+                        getPetSizeFromDatabase(petName);
+                    } else {
+                        document.getElementById('petSize').textContent = 'Not specified';
+                    }
+                } else if (window.getPetSizeFromDatabase) {
+                    // No size in URL, try to get from database
+                    getPetSizeFromDatabase(petName);
+                } else {
+                    document.getElementById('petSize').textContent = 'Not specified';
+                }
+            } else {
+                document.getElementById('petSize').textContent = 'Not specified';
             }
             if (urlParams.has('date')) {
                 const date = new Date(urlParams.get('date'));
@@ -199,49 +276,76 @@
                 paypal.Buttons({
                     style: { layout: 'vertical', color: 'gold', shape: 'rect', label: 'paypal' },
                     createOrder: function(data, actions) {
-                        // Charge the TOTAL (service + tax)
                         return actions.order.create({
                             purchase_units: [{
-                                amount: { value: total.toFixed(2), currency_code: 'MYR' },
-                                description: `Booking: ${service}`
+                                description: service,
+                                amount: {
+                                    value: total.toFixed(2),
+                                    currency_code: 'MYR',
+                                    breakdown: {
+                                        item_total: {
+                                            value: amount.toFixed(2),
+                                            currency_code: 'MYR'
+                                        },
+                                        tax_total: {
+                                            value: (total - amount).toFixed(2),
+                                            currency_code: 'MYR'
+                                        }
+                                    }
+                                },
+                                items: [{
+                                    name: service,
+                                    unit_amount: {
+                                        value: amount.toFixed(2),
+                                        currency_code: 'MYR'
+                                    },
+                                    quantity: '1',
+                                    category: 'DIGITAL_GOODS'
+                                }]
                             }]
                         });
                     },
-                    onApprove: function(data, actions) {
-                        return actions.order.capture().then(function(details) {
-                            // Success UI
-                            document.querySelector('.payment-success').style.display = 'block';
-                            const buttons = document.getElementById('paypal-buttons');
-                            if (buttons) buttons.style.display = 'none';
+                    onApprove: async function(data, actions) {
+                        try {
+                            // Show loading state
+                            document.querySelector('.payment-actions').style.display = 'none';
+                            document.querySelector('.payment-processing').style.display = 'block';
+                            
+                            // Capture the order
+                            const details = await actions.order.capture();
+                            
+                            // Save to Firebase
+                            const { appointmentId, paymentId, invoiceId, invoiceNumber } = await window.saveAppointmentToDB(details.id);
                             
                             // Update booking status
-                            const paymentId = details.id || (details.purchase_units && details.purchase_units[0]?.payments?.captures?.[0]?.id) || '';
-                            updateBookingStatus('completed', paymentId);
-                            if (window.saveAppointmentToDB) {
-                                window.saveAppointmentToDB(paymentId)
-                                  .then((apptId) => {
-                                      console.log('[PayPal] appointment saved:', apptId);
-                                      const t = window.paymentTotals || { amount: 0, tax: 0, total: 0, currency: 'MYR' };
-                                      if (window.createInvoiceInDB) {
-                                          window.createInvoiceInDB(apptId, paymentId, t)
-                                            .then((invoiceId) => {
-                                                console.log('[PayPal] invoice saved:', invoiceId);
-                                                if (window.savePaymentForAdmin) {
-                                                    window.savePaymentForAdmin(paymentId, apptId, t)
-                                                      .then(() => console.log('[PayPal] admin payment saved:', paymentId))
-                                                      .catch(err => console.error('Save admin payment failed', err));
-                                                }
-                                            })
-                                            .catch(err => console.error('Create invoice failed', err));
-                                      }
-                                  })
-                                  .catch(err => console.error('Save to DB failed', err));
+                            updateBookingStatus('paid', paymentId);
+                            
+                            // Show success message
+                            document.querySelector('.payment-processing').style.display = 'none';
+                            document.querySelector('.payment-success').style.display = 'block';
+                            
+                            // Enable download invoice button
+                            const downloadBtn = document.getElementById('downloadInvoiceBtn');
+                            if (downloadBtn) {
+                                downloadBtn.style.display = 'inline-block';
+                                downloadBtn.onclick = () => window.open(`/invoice.html?id=${invoiceId}`, '_blank');
                             }
-                        });
+                            
+                            return details;
+                        } catch (error) {
+                            console.error('Payment processing error:', error);
+                            alert('Failed to process payment. Please try again or contact support.');
+                            // Reset UI
+                            document.querySelector('.payment-processing').style.display = 'none';
+                            document.querySelector('.payment-actions').style.display = 'block';
+                            throw error;
+                        }
                     },
                     onError: function(err) {
-                        console.error('PayPal error', err);
-                        alert('Payment failed. Please try again.');
+                        console.error('PayPal error:', err);
+                        alert('An error occurred while processing your payment. Please try again.');
+                        document.querySelector('.payment-processing').style.display = 'none';
+                        document.querySelector('.payment-actions').style.display = 'block';
                     }
                 }).render('#paypal-buttons');
             }
@@ -260,12 +364,13 @@
                 localStorage.setItem('petBookings', JSON.stringify(bookings));
             }
         }
+
     </script>
 
     <!-- Firebase save to Realtime Database after successful PayPal capture -->
     <script type="module">
         import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.1.0/firebase-auth.js';
-        import { getDatabase, ref, push, set } from 'https://www.gstatic.com/firebasejs/10.1.0/firebase-database.js';
+        import { getDatabase, ref, push, set, update } from 'https://www.gstatic.com/firebasejs/10.1.0/firebase-database.js';
         import { app } from './js/firebase-config.js';
 
         const auth = getAuth(app);
@@ -281,23 +386,33 @@
                         const serviceName = urlParams.get('service') || '';
                         const date = urlParams.get('date') || '';
                         const time = urlParams.get('time') || '';
-                        const amount = urlParams.get('amount') || '0';
+                        const baseAmount = parseFloat(urlParams.get('amount') || '0');
+                        const tax = baseAmount * 0.1; // 10% tax
+                        const totalAmount = baseAmount + tax;
                         const size = urlParams.get('size') || '';
                         const type = urlParams.get('type') || '';
                         const endDate = urlParams.get('endDate') || '';
                         const stayDays = urlParams.get('stayDays') || '';
                         const species = urlParams.get('species') || '';
+                        const notes = urlParams.get('notes') || '';
                         const nowIso = new Date().toISOString();
-                        if (user && user.uid) {
-                            window.lastUserId = user.uid;
+                        
+                        if (!user || !user.uid) {
+                            throw new Error('User not authenticated');
                         }
+                        
+                        window.lastUserId = user.uid;
+                        
+                        // 1. Create appointment
                         const appt = {
-                            userId: user ? user.uid : '',
+                            userId: user.uid,
                             petName,
                             serviceName,
                             date,
                             time,
-                            price: Number(amount),
+                            price: totalAmount,
+                            basePrice: baseAmount,
+                            tax: tax,
                             size,
                             type,
                             endDate,
@@ -305,26 +420,137 @@
                             species: species || undefined,
                             status: 'confirmed',
                             paymentId: paymentId || '',
+                            notes: notes || undefined,
                             createdAt: nowIso,
                             updatedAt: nowIso
                         };
+                        
                         // Remove empty/undefined fields
                         Object.keys(appt).forEach(k => (appt[k] === undefined || appt[k] === '') && delete appt[k]);
 
-                        const newRef = push(ref(db, 'appointments'));
-                        await set(newRef, appt);
-                        window.lastAppointmentId = newRef.key;
-                        resolve(newRef.key);
+                        // Save appointment
+                        const newApptRef = push(ref(db, 'appointments'));
+                        await set(newApptRef, appt);
+                        const appointmentId = newApptRef.key;
+                        window.lastAppointmentId = appointmentId;
+
+                        // 2. Create payment record
+                        const paymentRef = push(ref(db, 'payments'));
+                        const paymentData = {
+                            id: paymentId || `pay_${Date.now()}`,
+                            userId: user.uid,
+                            appointmentId: appointmentId,
+                            amount: totalAmount,
+                            baseAmount: baseAmount,
+                            tax: tax,
+                            status: 'completed',
+                            method: 'paypal',
+                            paymentDate: nowIso,
+                            createdAt: nowIso,
+                            updatedAt: nowIso
+                        };
+                        await set(paymentRef, paymentData);
+
+                        // 3. Create invoice
+                        const invoiceRef = push(ref(db, 'invoices'));
+                        const invoiceNumber = `INV-${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-${String(invoiceRef.key).substring(0, 8).toUpperCase()}`;
+                        const invoiceData = {
+                            number: invoiceNumber,
+                            date: nowIso,
+                            userId: user.uid,
+                            appointmentId: appointmentId,
+                            paymentId: paymentId || paymentData.id,
+                            petName: petName,
+                            service: serviceName,
+                            amount: totalAmount,
+                            baseAmount: baseAmount,
+                            tax: tax,
+                            status: 'paid',
+                            createdAt: nowIso,
+                            updatedAt: nowIso
+                        };
+                        await set(invoiceRef, invoiceData);
+
+                        // Update appointment with payment and invoice references
+                        await update(newApptRef, {
+                            paymentId: paymentData.id,
+                            invoiceId: invoiceRef.key,
+                            updatedAt: new Date().toISOString()
+                        });
+
+                        resolve({ 
+                            appointmentId, 
+                            paymentId: paymentData.id, 
+                            invoiceId: invoiceRef.key,
+                            invoiceNumber
+                        });
                     } catch (e) {
-                        console.error('Failed to save appointment:', e);
+                        console.error('Failed to save booking data:', e);
                         reject(e);
                     }
                 });
             });
         };
     </script>
+    
+    <!-- Add loading spinner styles -->
+    <style>
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-radius: 50%;
+            border-top: 4px solid #3498db;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        .payment-processing {
+            text-align: center;
+            padding: 20px;
+            display: none;
+        }
+
+        .payment-processing p {
+            color: #666;
+            font-size: 16px;
+        }
+    </style>
 
     <!-- Create invoice in DB and open printable preview -->
+    <script>
+        // Back button functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const backButton = document.getElementById('backButton');
+            if (backButton) {
+                backButton.addEventListener('click', function() {
+                    // Get all URL parameters
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const formData = {};
+                    
+                    // Save all URL parameters to sessionStorage
+                    urlParams.forEach((value, key) => {
+                        formData[key] = value;
+                    });
+                    
+                    // Save the form data to sessionStorage
+                    sessionStorage.setItem('bookingFormData', JSON.stringify(formData));
+                    
+                    // Add a flag to indicate we're coming back from payment
+                    sessionStorage.setItem('returningFromPayment', 'true');
+                    
+                    // Navigate back to the booking page
+                    window.location.href = 'booking.html';
+                });
+            }
+        });
+    </script>
+
     <script type="module">
         import { getAuth } from 'https://www.gstatic.com/firebasejs/10.1.0/firebase-auth.js';
         import { getDatabase, ref, push, set, update } from 'https://www.gstatic.com/firebasejs/10.1.0/firebase-database.js';

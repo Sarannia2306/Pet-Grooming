@@ -1,17 +1,21 @@
 /**
- * SnuggleCare - Main JavaScript Entry Point
+ * SnugglePaw - Main JavaScript Entry Point
  * This file serves as the entry point for all JavaScript functionality
  * It imports and initializes all modules
  */
 
-// Only import the form-validation module since it's the only one that exists
+// Import modules
 import FormValidation from './modules/form-validation.js';
+import { checkAuthStatus } from './auth.js';
 
 // Initialize all modules when the DOM is fully loaded
 document.addEventListener('DOMContentLoaded', () => {
     try {
         // Add loaded class to body to enable transitions
         document.body.classList.add('loaded');
+        
+        // Check authentication status
+        checkAuthStatus();
         
         // Initialize Form Validation if the module exists
         if (typeof FormValidation === 'function') {
@@ -21,9 +25,9 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
         
-        console.log('SnuggleCare: All modules initialized successfully');
+        console.log('SnugglePaw: All modules initialized successfully');
     } catch (error) {
-        console.error('SnuggleCare: Error initializing modules', error);
+        console.error('SnugglePaw: Error initializing modules', error);
     }
 });
 

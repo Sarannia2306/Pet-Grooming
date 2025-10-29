@@ -8,6 +8,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/pages/contact.css">
+    <link rel="stylesheet" href="css/pages/dashboard.css">
     
 </head>
 <body>
@@ -83,8 +84,7 @@
                         </div>
                         <div class="info-content">
                             <h3>Email Address</h3>
-                            <p>info@SnugglePaw.com.my</p>
-                            <p>support@SnugglePaw.com.my</p>
+                            <p>SnugglePaw.info@gmail.com</p>
                             <p style="margin-top: 0.5rem;">We typically respond within 24 hours</p>
                             
                             <div class="social-links">
@@ -100,7 +100,7 @@
                 <div class="contact-form-container">
                     <div class="contact-form">
                         <h3 style="margin-top: 0; color: #2c3e50; font-size: 1.5rem; margin-bottom: 1.5rem;">Send Us a Message</h3>
-                        <form id="contactForm">
+                        <form id="contactForm" onsubmit="sendMail(event)">
                             <div class="form-group">
                                 <label for="name">Full Name</label>
                                 <input type="text" id="name" class="form-control" placeholder="Your name" required>
@@ -271,7 +271,7 @@
                     <ul>
                         <li><i class="fas fa-map-marker-alt"></i> 123 Jalan Sultan Ahmad Shah, 10050 George Town, Penang, Malaysia</li>
                         <li><i class="fas fa-phone"></i> +60 4-123 4567</li>
-                        <li><i class="fas fa-envelope"></i> info@SnugglePaw.com.my</li>
+                        <li><i class="fas fa-envelope"></i> SnugglePaw.info@gmail.com</li>
                     </ul>
                 </div>
             </div>
@@ -285,9 +285,65 @@
         </div>
     </footer>
 
+    <!-- Load EmailJS SDK first -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <script type="text/javascript">
+
+        // Initialize EmailJS with your public key
+        (function() {
+            emailjs.init('a7hxHhF2v_S6jypo3'); 
+        })();
+
+        // Function to send email
+        function sendMail(e) {
+            e.preventDefault();
+            
+            // Show loading state
+            const submitBtn = document.querySelector('#contactForm button[type="submit"]');
+            const originalBtnText = submitBtn.innerHTML;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+            
+            // Get form data
+            const formData = {
+                from_name: document.getElementById('name').value,
+                from_email: document.getElementById('email').value,
+                to_email: 'SnugglePaw.info@gmail.com', 
+                phone: document.getElementById('phone').value,
+                subject: document.getElementById('subject').value,
+                message: document.getElementById('message').value,
+                reply_to: document.getElementById('email').value
+                
+            };
+            
+            // Send email using EmailJS
+            emailjs.send('service_jew0k8o', 'template_p927kvp', formData) 
+                .then(function(response) {
+                    // Show success message
+                    alert('Thank you for your message! We will get back to you soon.');
+                    document.getElementById('contactForm').reset();
+                    console.log(formData);
+                }, function(error) {
+                    // Show error message
+                    console.error('EmailJS Error:', error);
+                    alert('There was an error sending your message. Please try again later or contact us at SnugglePaw.info@gmail.com');
+                })
+                .finally(() => {
+                    // Reset button state
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalBtnText;
+                });
+                
+            return false;
+        }
+    </script>
+    <!-- Load other scripts as modules -->
     <script type="module" src="js/auth-navbar.js"></script>
-    <script src="js/main.js"></script>
+    <script type="module" src="js/script.js"></script>
+
     <script>
+
+        // Add event listener to the form
         document.addEventListener('DOMContentLoaded', function() {
             // FAQ Toggle
             const faqItems = document.querySelectorAll('.faq-item');
@@ -295,41 +351,20 @@
             faqItems.forEach(item => {
                 const question = item.querySelector('.faq-question');
                 
-                question.addEventListener('click', () => {
-                    // Close all other open items
-                    faqItems.forEach(otherItem => {
-                        if (otherItem !== item && otherItem.classList.contains('active')) {
-                            otherItem.classList.remove('active');
-                        }
+                if (question) {
+                    question.addEventListener('click', () => {
+                        // Close all other open items
+                        faqItems.forEach(otherItem => {
+                            if (otherItem !== item && otherItem.classList.contains('active')) {
+                                otherItem.classList.remove('active');
+                            }
+                        });
+                        
+                        // Toggle current item
+                        item.classList.toggle('active');
                     });
-                    
-                    // Toggle current item
-                    item.classList.toggle('active');
-                });
+                }
             });
-            
-            // Form submission
-            const contactForm = document.getElementById('contactForm');
-            
-            if (contactForm) {
-                contactForm.addEventListener('submit', function(e) {
-                    e.preventDefault();
-                    
-                    // Get form values
-                    const name = document.getElementById('name').value;
-                    const email = document.getElementById('email').value;
-                    const message = document.getElementById('message').value;
-                    
-                    // In a real application, you would send this data to your server
-                    console.log('Form submitted:', { name, email, message });
-                    
-                    // Show success message
-                    alert('Thank you for your message! We will get back to you soon.');
-                    
-                    // Reset form
-                    contactForm.reset();
-                });
-            }
             
             // Mobile menu toggle
             const hamburger = document.querySelector('.hamburger');

@@ -15,50 +15,57 @@
 .auth-container {
     display: flex;
     min-height: calc(100vh - 80px);
+    height: auto;
     margin-top: 80px;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 0;
 }
 
 /* Auth Image Section */
 .auth-image {
+    display: none;
     flex: 1;
     background: url('https://images.unsplash.com/photo-1587300003388-59208cc962cb?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80') 
                 no-repeat center center/cover;
-    display: none;
     position: relative;
+    min-height: 0;
+    height: 100%;
 }
 
 /* Form Container */
 .auth-form-container {
-    flex: 1;
+    width: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 2rem;
+    padding: 1rem;
     background-color: var(--light-gray);
 }
 
 /* Form Styling */
 .auth-form {
-    max-width: 450px;
+    max-width: 400px;
     width: 100%;
     background: white;
-    padding: 2.5rem;
+    padding: 1.5rem;
     border-radius: var(--border-radius);
     box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
     transition: var(--transition);
+    margin: 0 auto;
 }
 
 .auth-form h1 {
     text-align: center;
-    margin-bottom: 1.5rem;
+    margin-bottom: 1.2rem;
     color: var(--primary-color);
-    font-size: 2rem;
+    font-size: 1.75rem;
     font-weight: 600;
 }
 
 /* Form Groups */
 .form-group {
-    margin-bottom: 1.5rem;
+    margin-bottom: 1.2rem;
     position: relative;
 }
 
@@ -73,11 +80,11 @@
 /* Form Controls */
 .form-control {
     width: 100%;
-    padding: 0.85rem 1rem;
+    padding: 0.7rem 1rem;
     border: 1px solid var(--border-color);
     border-radius: var(--border-radius);
     font-family: 'Poppins', sans-serif;
-    font-size: 1rem;
+    font-size: 0.95rem;
     transition: var(--transition);
 }
 
@@ -138,13 +145,14 @@
 .btn {
     display: block;
     width: 100%;
-    padding: 0.8rem;
-    border-radius: 8px;
+    padding: 0.7rem;
+    border-radius: 6px;
     font-weight: 500;
+    font-size: 0.95rem;
     text-align: center;
     cursor: pointer;
     border: none;
-    margin-top: 1rem;
+    margin-top: 0.8rem;
 }
 
 .btn-primary {
@@ -163,7 +171,7 @@
 
 .divider {
     text-align: center;
-    margin: 1.5rem 0;
+    margin: 1.2rem 0;
     position: relative;
 }
 
@@ -188,7 +196,8 @@
 
 .auth-footer {
     text-align: center;
-    margin-top: 1.5rem;
+    margin-top: 1.2rem;
+    font-size: 0.95rem;
 }
 
 .auth-footer a {
@@ -210,11 +219,32 @@
 }
 
 @media (min-width: 992px) {
+    .auth-container {
+        flex-direction: row;
+        height: calc(100vh - 80px);
+        padding: 0;
+        overflow: hidden;
+    }
+    
     .auth-image {
         display: block;
+        height: 100%;
+        min-height: 0;
+    }
+    
+    .auth-form-container {
+        padding: 1.5rem;
+        overflow: visible;
+        height: 100%;
+        max-width: 50%;
+        display: flex;
+        align-items: center;
     }
     
     .auth-form {
-        padding: 3rem;
+        padding: 1.5rem;
+        max-width: 400px;
+        width: 100%;
+        margin: 0 auto;
     }
 }

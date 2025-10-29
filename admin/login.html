@@ -59,9 +59,42 @@
     const submitBtn = document.getElementById('submitBtn');
     const errorBox = document.getElementById('errorBox');
 
-    function showError(msg){ errorBox.textContent = msg; errorBox.classList.add('error'); errorBox.style.display = 'block'; }
+    function showError(msg) {
+        // Common error messages
+        let userFriendlyMsg = msg;
+        
+        // Map Firebase error codes to user-friendly messages
+        const errorMap = {
+            'auth/invalid-email': 'Please enter a valid email address',
+            'auth/user-disabled': 'This account has been disabled',
+            'auth/user-not-found': 'No account found with this email',
+            'auth/wrong-password': 'Incorrect password',
+            'auth/too-many-requests': 'Too many attempts. Please try again later.',
+            'no-admin-profile': 'No admin profile found',
+            'insufficient-role': 'Insufficient permissions',
+            'no-admin-profile': 'No admin profile found',
+            'insufficient-role': 'Insufficient permissions'
+        };
+        
+        // Check if the error message matches any of our known patterns
+        if (msg.includes('auth/')) {
+            const errorCode = msg.split(' ')[0];
+            userFriendlyMsg = errorMap[errorCode] || 'Invalid email or password';
+        } else if (msg.includes('No admin profile found')) {
+            userFriendlyMsg = 'No admin account found with this email';
+        } else if (msg.includes('Insufficient role')) {
+            userFriendlyMsg = 'You do not have permission to access the admin panel';
+        }
+        
+        errorBox.textContent = userFriendlyMsg; 
+        errorBox.classList.add('error'); 
+        errorBox.style.display = 'block';
+    }
 
-    function isAdminRole(role){ return String(role||'').toLowerCase() === 'admin' || String(role||'').toLowerCase() === 'superadmin'; }
+    function isAdminRole(role) { 
+        return String(role||'').toLowerCase() === 'admin' || 
+               String(role||'').toLowerCase() === 'superadmin'; 
+    }
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();

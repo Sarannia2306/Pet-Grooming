@@ -226,10 +226,30 @@ async function loadUserAppointments(userId) {
             });
         }
         items.sort((a, b) => new Date(`${a.date || ''} ${a.time || ''}`) - new Date(`${b.date || ''} ${b.time || ''}`));
+        await maybeCompleteAppointments(items);
         renderAppointments(items);
-    } catch (err) {
+      } catch (err) {
         console.error('Error loading appointments:', err);
+      }
     }
+
+function isApptPast(a){
+  if (!a?.date) return false;
+  const dt = new Date(`${a.date} ${a.time || '00:00'}`);
+  return dt.getTime() < Date.now();
+}
+
+async function maybeCompleteAppointments(items){
+  try {
+    const candidates = (items||[]).filter(a => String(a.status||'').toLowerCase() !== 'cancelled' && String(a.status||'').toLowerCase() !== 'completed' && isApptPast(a));
+    await Promise.all(candidates.map(async a => {
+      try {
+        await update(ref(database, `appointments/${a.id}`), { status: 'completed', completedAt: new Date().toISOString() });
+        a.status = 'completed';
+        a.completedAt = new Date().toISOString();
+      } catch(e){ console.warn('complete appt failed', a.id, e); }
+    }));
+  } catch(e){ console.warn('maybeCompleteAppointments error', e); }
 }
 
 function renderAppointments(items) {
@@ -259,7 +279,7 @@ function renderAppointments(items) {
                 </div>
             </div>
             <div class="appointment-actions">
-              <span class="status-badge ${a.status ? `status-${a.status}` : 'status-confirmed'}">${(a.status || 'confirmed')}</span>
+              <span class="status-badge ${String(a.status||'confirmed').toLowerCase()==='completed' ? 'status-confirmed' : 'status-' + String(a.status||'confirmed').toLowerCase()}">${(a.status || 'confirmed')}</span>
               ${String(a.status||'').toLowerCase() === 'pending_cancellation' && a.cancel?.paymentId && a.cancel?.feeAmount
                 ? `<a class=\"btn btn-sm\" style=\"background:#e74c3c;color:#fff;border:none\" href=\"payment.html?pay=${a.cancel.paymentId}\">`
                     + `<i class=\"fas fa-exclamation-triangle\"></i> Pay Cancellation Fee (RM${Number(a.cancel.feeAmount).toFixed(2)})`
@@ -270,11 +290,109 @@ function renderAppointments(items) {
                       + `</button>`
                     : '')
               }
+              ${String(a.status||'').toLowerCase() === 'completed' && !a.reviewId
+                ? `<button class=\"btn btn-sm\" data-rate=\"${a.id}\"><i class=\"fas fa-star\"></i> Rate Service</button>`
+                : ''}
             </div>
         </div>
     `).join('');
 
+  // wire rating
+  container.querySelectorAll('[data-rate]')?.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.getAttribute('data-rate');
+      const appt = (items||[]).find(x => String(x.id) === String(id));
+      if (appt) openReviewModal(appt);
+    });
+  });
+
   // cancellation is now admin-triggered with fee when applicable.
+}
+
+// ------- Review Modal & Save -------
+function escapeHtml(str){
+  return String(str || '')
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;')
+    .replace(/'/g,'&#39;');
+}
+function openReviewModal(appt){
+  const existing = document.getElementById('reviewModal');
+  if (existing) existing.remove();
+  const wrap = document.createElement('div');
+  wrap.id = 'reviewModal';
+  wrap.className = 'modal-overlay';
+  wrap.innerHTML = `
+    <div class="modal-box">
+      <div class="modal-header"><h3>Rate ${escapeHtml(appt.serviceName || 'Service')}</h3><button class="modal-close">&times;</button></div>
+      <div class="modal-body">
+        <div class="stars" id="reviewStars" aria-label="Rating out of 5">
+          ${[1,2,3,4,5].map(n => `<button type="button" class="star" data-val="${n}">★</button>`).join('')}
+        </div>
+        <textarea id="reviewComment" class="form-control" rows="3" placeholder="Share your experience (optional)"></textarea>
+      </div>
+      <div class="modal-footer">
+        <button id="reviewCancel" class="btn btn-outline">Cancel</button>
+        <button id="reviewSubmit" class="btn btn-primary"><i class="fas fa-paper-plane"></i> Submit</button>
+      </div>
+    </div>`;
+  document.body.appendChild(wrap);
+
+  // Minimal styles for modal
+  const style = document.createElement('style');
+  style.textContent = `
+    .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;z-index:1000}
+    .modal-box{background:#fff;border-radius:10px;min-width:300px;max-width:520px;width:92%;box-shadow:0 10px 30px rgba(0,0,0,.15)}
+    .modal-header{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid #eee}
+    .modal-body{padding:16px}
+    .modal-footer{padding:12px 16px;display:flex;gap:8px;justify-content:flex-end;border-top:1px solid #eee}
+    .star{font-size:24px;color:#ddd;background:none;border:none;cursor:pointer}
+    .star.active{color:#f4b400}
+  `;
+  document.head.appendChild(style);
+
+  // rating logic
+  let rating = 0;
+  wrap.querySelectorAll('.star').forEach(btn => btn.addEventListener('click', () => {
+    rating = Number(btn.getAttribute('data-val')) || 0;
+    wrap.querySelectorAll('.star').forEach(s => s.classList.toggle('active', Number(s.getAttribute('data-val')) <= rating));
+  }));
+
+  const close = () => wrap.remove();
+  wrap.querySelector('.modal-close').addEventListener('click', close);
+  wrap.querySelector('#reviewCancel').addEventListener('click', close);
+  wrap.addEventListener('click', (e) => { if (e.target === wrap) close(); });
+
+  wrap.querySelector('#reviewSubmit').addEventListener('click', async () => {
+    if (!rating) { showAlert('Please select a rating.', 'error'); return; }
+    try {
+      const user = auth.currentUser;
+      if (!user) { showAlert('Please login first.', 'error'); return; }
+      const key = push(ref(database, 'reviews')).key;
+      const payload = {
+        id: key,
+        appointmentId: appt.id,
+        userId: user.uid,
+        userEmail: user.email || '',
+        pet: appt.petName || '',
+        service: appt.serviceName || '',
+        rating: rating,
+        comment: (document.getElementById('reviewComment')?.value || '').trim(),
+        date: new Date().toISOString()
+      };
+      await set(ref(database, `reviews/${key}`), payload);
+      await update(ref(database, `appointments/${appt.id}`), { reviewId: key, status: 'completed' });
+      showAlert('Thank you for your review!', 'success');
+      close();
+      // refresh list to hide rate button
+      await loadUserAppointments(user.uid);
+    } catch (e){
+      console.error('Save review failed', e);
+      showAlert('Could not save your review. Please try again later.', 'error');
+    }
+  });
 }
 
 /**
@@ -321,7 +439,9 @@ function renderInvoices(invoices) {
                     <span><i class="fas fa-tag"></i>${inv.service || 'Service'}</span>
                 </div>
             </div>
-            <div class="invoice-amount ${inv.status === 'paid' ? 'paid' : 'due'}">${inv.amount ? `${inv.currency || 'MYR'} ${inv.amount}` : ''}</div>
+            <div class="invoice-amount ${inv.status === 'paid' ? 'paid' : 'due'}">
+                ${inv.amount ? `${inv.currency || 'MYR'} ${inv.amount}` : ''}
+            </div>
             <div class="invoice-status ${inv.status || 'due'}">${(inv.status || 'due').toUpperCase()}</div>
             ${inv.url 
                 ? `<a class=\"btn btn-outline btn-sm\" href=\"${inv.url}\" target=\"_blank\"><i class=\"fas fa-eye\"></i> View</a>` 
@@ -333,35 +453,244 @@ function renderInvoices(invoices) {
     attachInvoiceViewHandlers(invoices);
 }
 
+// Bills & Invoice
 async function openInvoiceById(invoiceId) {
     try {
         const user = auth.currentUser;
         if (!user) return;
-        // Read from top-level invoices collection filtered by id
+        
+        // Read the invoice data
         const invRef = ref(database, `invoices/${invoiceId}`);
-        const snapshot = await get(invRef);
-        if (!snapshot.exists()) return;
-        const inv = snapshot.val();
+        const invSnapshot = await get(invRef);
+        if (!invSnapshot.exists()) return;
+        const inv = invSnapshot.val();
+        
+        
+        // Get user data from the users node
+        const userRef = ref(database, `users/${user.uid}`);
+        const userSnapshot = await get(userRef);
+        const userData = userSnapshot.exists() ? userSnapshot.val() : {};
+        
+        // Get pet data if appointmentId exists
+        let petName = '';
+        if (inv.appointmentId) {
+            const apptRef = ref(database, `appointments/${inv.appointmentId}`);
+            const apptSnapshot = await get(apptRef);
+            if (apptSnapshot.exists()) {
+                const apptData = apptSnapshot.val();
+                petName = apptData.pet || apptData.petName || '';
+            }
+        }
         const html = `<!DOCTYPE html>
-        <html><head><meta charset="utf-8"><title>Invoice ${inv.number || invoiceId}</title>
+        <html><head><meta charset="utf-8"><title>Invoice #${inv.number || invoiceId} - SnugglePaw</title>
         <style>
-        body{font-family: Arial, sans-serif; padding:20px;color:#2c3e50}
-        .header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
-        .title{font-size:20px;font-weight:bold}
-        .section{margin-bottom:12px}
-        .row{display:flex;justify-content:space-between;margin:6px 0}
-        .total{font-weight:bold;border-top:1px solid #ddd;padding-top:8px;margin-top:8px}
-        .muted{color:#7f8c8d}
-        </style></head><body>
-        <div class="header"><div class="title">Invoice #${inv.number || invoiceId}</div><div class="muted">${new Date(inv.date || Date.now()).toLocaleString()}</div></div>
-        <div class="section">
-          <div class="row"><span>Service</span><span>${inv.service || '-'}</span></div>
-          <div class="row"><span>Appointment ID</span><span>${inv.appointmentId || '-'}</span></div>
-          <div class="row"><span>Payment ID</span><span>${inv.paymentId || '-'}</span></div>
-        </div>
-        <div class="section">
-          <div class="row"><span>Amount</span><span>${inv.currency || 'MYR'} ${Number(inv.amount || 0).toFixed(2)}</span></div>
-          <div class="row total"><span>Status</span><span>${(inv.status || 'PAID').toString().toUpperCase()}</span></div>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Poppins', Arial, sans-serif;
+            margin: 0;
+            padding: 30px;
+            color: #333;
+            background-color: #f8f9fa;
+        }
+        .invoice-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            padding: 40px;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+        .logo {
+            font-size: 24px;
+            font-weight: 700;
+            color: #011627;
+            margin-bottom: 10px;
+        }
+        .invoice-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: #2c3e50;
+            margin: 0;
+        }
+        .invoice-meta {
+            text-align: right;
+        }
+        .invoice-number {
+            font-size: 18px;
+            color: #6c757d;
+            margin-bottom: 5px;
+        }
+        .invoice-date {
+            color: #6c757d;
+            font-size: 14px;
+        }
+        .section {
+            margin-bottom: 30px;
+        }
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #209489;
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #f0f2f5;
+        }
+        .row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #f0f2f5;
+        }
+        .row:last-child {
+            border-bottom: none;
+        }
+        .label {
+            color: #6c757d;
+            font-weight: 500;
+        }
+        .value {
+            font-weight: 500;
+            color: #2c3e50;
+        }
+        .total {
+            font-weight: 700;
+            font-size: 18px;
+            color: #2c3e50;
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 2px solid #4a6cf7;
+        }
+        .status {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .status.paid {
+            background-color: #d1fae5;
+            color: #065f46;
+        }
+        .status.pending {
+            background-color: #fef3c7;
+            color: #92400e;
+        }
+        .status.overdue {
+            background-color: #fee2e2;
+            color: #991b1b;
+        }
+        .footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+            text-align: center;
+            color: #6c757d;
+            font-size: 14px;
+        }
+        .highlight {
+            color: #209489;
+            font-weight: 600;
+        }
+        @media print {
+            body { padding: 0; }
+            .invoice-container { box-shadow: none; padding: 0; }
+        }
+        </style>
+        </head>
+        <body>
+        <div class="invoice-container">
+            <div class="header">
+                <div class="company-info">
+                    <div class="logo">Snuggle<span style="color: #2ec4b6;">Paw</span></div>
+                    <div>123 Jalan Sultan Ahmad Shah</div>
+                    <div>10050 George Town, Penang, Malaysia </div>
+                    <div>SnugglePaw.info@gmail.com</div>
+                </div>
+                <div class="invoice-meta">
+                    <h1 class="invoice-title">INVOICE</h1>
+                    <div class="invoice-number">#${inv.number || invoiceId}</div>
+                    <div class="invoice-date">${new Date(inv.date || Date.now()).toLocaleDateString('en-MY', { year: 'numeric', month: 'long', day: 'numeric' })}</div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">Bill To</div>
+                <div class="row">
+                    <span class="label">Customer Name</span>
+                    <span class="value">${userData.name || inv.customerName || 'Customer'}</span>
+                </div>
+                <div class="row">
+                    <span class="label">Email</span>
+                    <span class="value">${userData.email || inv.customerEmail || user.email || '-'}</span>
+                </div>
+                <div class="row">
+                    <span class="label">Phone</span>
+                    <span class="value">${userData.phone || '-'}</span>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">Service Details</div>
+                <div class="row">
+                    <span class="label">Service</span>
+                    <span class="value">${inv.service || '-'}</span>
+                </div>
+                <div class="row">
+                    <span class="label">Pet Name</span>
+                    <span class="value">${petName || inv.petName || '-'}</span>
+                </div>
+                ${inv.appointmentId ? `
+                <div class="row">
+                    <span class="label">Appointment ID</span>
+                    <span class="value">${inv.appointmentId}</span>
+                </div>` : ''}
+                ${inv.paymentId ? `
+                <div class="row">
+                    <span class="label">Payment ID</span>
+                    <span class="value">${inv.paymentId}</span>
+                </div>` : ''}
+                <div class="row">
+                    <span class="label">Date</span>
+                    <span class="value">${new Date(inv.date || Date.now()).toLocaleDateString('en-MY', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">Payment Summary</div>
+                <div class="row">
+                    <span class="label">Service Amount</span>
+                    <span class="value">${inv.currency || 'MYR'} ${Number(inv.baseAmount || inv.basePrice || inv.amount || 0).toFixed(2)}</span>
+                </div>
+                ${inv.tax ? `
+                <div class="row">
+                    <span class="label">Service Tax (10%)</span>
+                    <span class="value">${inv.currency || 'MYR'} ${Number(inv.tax).toFixed(2)}</span>
+                </div>` : ''}
+                <div class="row total">
+                    <span>Total Amount</span>
+                    <span>${inv.currency || 'MYR'} ${Number(inv.amount || 0).toFixed(2)}</span>
+                </div>
+                <div class="row">
+                    <span class="label">Status</span>
+                    <span class="status ${(inv.status || 'paid').toLowerCase()}">${(inv.status || 'PAID').toUpperCase()}</span>
+                </div>
+            </div>
+
+            <div class="footer">
+                <p>Thank you for choosing <span class="highlight">SnugglePaw</span> for your pet's needs!</p>
+                <p>If you have any questions about this invoice, please contact our support team.</p>
+            </div>
         </div>
         <script>window.onload = () => setTimeout(() => window.print(), 300);<\/script>
         </body></html>`;
@@ -396,6 +725,19 @@ async function loadUserMessages(userId) {
         if (snapshot.exists()) {
             snapshot.forEach(child => messages.push({ id: child.key, ...child.val() }));
         }
+        // Also include global announcement if present
+        try {
+            const annSnap = await get(ref(database, 'content/announcement'));
+            if (annSnap.exists()){
+                const a = annSnap.val();
+                const text = typeof a === 'string' ? a : (a?.text || '');
+                const date = typeof a === 'object' && a?.date ? a.date : new Date().toISOString();
+                const already = messages.some(m => (m.type === 'announcement') && (m.text === text));
+                if (text && !already){
+                    messages.push({ id: 'announcement', from: 'Admin', text, date, type: 'announcement' });
+                }
+            }
+        } catch {}
         renderMessages(messages);
     } catch (err) {
         console.error('Error loading messages:', err);

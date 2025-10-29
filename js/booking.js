@@ -8,6 +8,7 @@ const db = getDatabase(app);
 
 // In-memory caches
 let SERVICES = null; // loaded from Realtime DB: services/{category}/{petType}/{index}
+let ADDITIONAL_SERVICES = []; // Stores additional services data
 
 // Boarding end-date helper
 function applyBoardingEndDate(pkgLabel, startISO) {
@@ -70,13 +71,48 @@ function computeStayDays(startISO, endISO) {
 }
 
 // ---- Time helpers ----
-function setTimeOptions(selectEl, options) {
+async function fetchBookedTimeSlots(serviceName, date) {
+    try {
+        const bookingsRef = ref(db, 'appointments');
+        const snapshot = await get(bookingsRef);
+        const bookedSlots = {};
+
+        if (snapshot.exists()) {
+            snapshot.forEach((child) => {
+                const booking = child.val();
+                if (booking.serviceName === serviceName && 
+                    booking.date === date && 
+                    booking.status !== 'cancelled' && 
+                    booking.status !== 'completed') {
+                    const time = booking.time || '';
+                    bookedSlots[time] = (bookedSlots[time] || 0) + 1;
+                }
+            });
+        }
+        return bookedSlots;
+    } catch (error) {
+        console.error('Error fetching booked time slots:', error);
+        return {};
+    }
+}
+
+function setTimeOptions(selectEl, options, bookedSlots = {}) {
     if (!selectEl) return;
     selectEl.innerHTML = '<option value="">Select a time</option>';
+    
     options.forEach(o => {
         const opt = document.createElement('option');
         opt.value = o.value;
         opt.textContent = o.label;
+        
+        // Check if this time slot is fully booked (2 or more bookings)
+        if (bookedSlots[o.value] >= 2) {
+            opt.disabled = true;
+            opt.textContent += ' (Fully Booked)';
+            opt.style.color = '#999';
+            opt.style.fontStyle = 'italic';
+        }
+        
         selectEl.appendChild(opt);
     });
 }
@@ -106,21 +142,98 @@ function daycareTimeOptions(pkgName) {
     ];
 }
 
-function updateTimeOptionsForSelection(category, pkgName, durationMins) {
+async function updateTimeOptionsForSelection(category, pkgName, durationMins) {
     const timeSelect = document.getElementById('time');
-    if (!timeSelect) return;
+    const dateInput = document.getElementById('date');
+    const packageSelect = document.getElementById('package');
+    const timeSlotNote = document.getElementById('timeSlotNote');
+    
+    if (!timeSelect || !packageSelect) return;
+    
+    // Get service name for availability check
+    const serviceName = packageSelect.options[packageSelect.selectedIndex]?.dataset?.name || '';
+    const selectedDate = dateInput?.value || '';
+    
+    // Show/hide time slot note based on service type
+    if (timeSlotNote) {
+        timeSlotNote.style.display = category === 'boarding' ? 'block' : 'none';
+    }
+    
+    let timeOptions = [];
+    
     if (category === 'daycare') {
-        setTimeOptions(timeSelect, daycareTimeOptions(pkgName));
+        timeOptions = daycareTimeOptions(pkgName);
     } else if (category === 'grooming') {
-        // New rule: list hourly times between 10:00 and 17:00
-        setTimeOptions(timeSelect, generateHourlyTimes(10, 17));
+        // Hourly times between 10:00 and 17:00 for grooming
+        timeOptions = generateHourlyTimes(10, 17);
     } else if (category === 'boarding') {
-        // Drop-off time only, hourly 10:00–22:00
-        setTimeOptions(timeSelect, generateHourlyTimes(10, 22));
+        // Drop-off time only, hourly 10:00–22:00 for boarding
+        timeOptions = generateHourlyTimes(10, 22);
+    }
+    
+    // If we have a date and service name, check for booked slots
+    if (selectedDate && serviceName && category !== 'boarding') {
+        try {
+            const bookedSlots = await fetchBookedTimeSlots(serviceName, selectedDate);
+            setTimeOptions(timeSelect, timeOptions, bookedSlots);
+        } catch (error) {
+            console.error('Error updating time slots:', error);
+            // Fallback to showing all slots as available if there's an error
+            setTimeOptions(timeSelect, timeOptions);
+        }
+    } else {
+        // If no date or service selected, just show all slots as available
+        setTimeOptions(timeSelect, timeOptions);
     }
 }
 const USER_PETS = new Map(); // petId -> pet data
 const CURRENCY = 'RM';
+const MAX_BOOKINGS_PER_SLOT = 2; // Maximum concurrent bookings allowed per time slot
+
+/**
+ * Checks if a time slot is available for booking
+ * @param {string} serviceName - The name of the service
+ * @param {string} date - Booking date in YYYY-MM-DD format
+ * @param {string} time - Booking time in HH:MM format
+ * @returns {Promise<{available: boolean, count: number, message: string}>} - Object with availability status and count
+ */
+async function isTimeSlotAvailable(serviceName, date, time) {
+    try {
+        const bookingsRef = ref(db, 'appointments');
+        const snapshot = await get(bookingsRef);
+        
+        if (!snapshot.exists()) {
+            return { available: true, count: 0, message: 'Time slot is available' };
+        }
+
+        let count = 0;
+        snapshot.forEach((childSnapshot) => {
+            const booking = childSnapshot.val();
+            // Check if booking is for the same service, date, and time, and is not cancelled/completed
+            if (booking.serviceName === serviceName && 
+                booking.date === date && 
+                booking.time === time && 
+                booking.status !== 'cancelled' &&
+                booking.status !== 'completed') {
+                count++;
+            }
+        });
+
+        const available = count < MAX_BOOKINGS_PER_SLOT;
+        const message = available 
+            ? 'Time slot is available' 
+            : 'This time slot is fully booked. Please choose another time.';
+
+        return { available, count, message };
+    } catch (error) {
+        console.error('Error checking time slot availability:', error);
+        return { 
+            available: false, 
+            count: MAX_BOOKINGS_PER_SLOT, 
+            message: 'Error checking availability. Please try again.' 
+        };
+    }
+}
 
 // Helper: extract price and unit based on category and available fields
 function extractPriceAndUnit(item, category) {
@@ -142,6 +255,105 @@ function extractPriceAndUnit(item, category) {
     return { price, unit };
 }
 
+// Restore form data from sessionStorage
+function restoreFormData() {
+    const savedData = sessionStorage.getItem('bookingFormData');
+    const isReturningFromPayment = sessionStorage.getItem('returningFromPayment') === 'true';
+    
+    if (!savedData || !isReturningFromPayment) return false;
+    
+    try {
+        const formData = JSON.parse(savedData);
+        
+        // Restore pet selection
+        if (formData.petId) {
+            const petSelect = document.getElementById('pet');
+            if (petSelect) {
+                // Wait for pets to load
+                const checkPets = setInterval(() => {
+                    if (petSelect.options.length > 1) {
+                        clearInterval(checkPets);
+                        petSelect.value = formData.petId;
+                        petSelect.dispatchEvent(new Event('change'));
+                    }
+                }, 100);
+            }
+        }
+        
+        // Restore service type
+        if (formData.serviceType) {
+            const typeSelect = document.getElementById('serviceType');
+            if (typeSelect) {
+                typeSelect.value = formData.serviceType;
+                typeSelect.dispatchEvent(new Event('change'));
+            }
+        }
+        
+        // Restore package
+        if (formData.package) {
+            const packageSelect = document.getElementById('package');
+            if (packageSelect) {
+                // Wait for packages to load
+                const checkPackage = setInterval(() => {
+                    if (packageSelect.options.length > 1) {
+                        clearInterval(checkPackage);
+                        packageSelect.value = formData.package;
+                        packageSelect.dispatchEvent(new Event('change'));
+                    }
+                }, 100);
+            }
+        }
+        
+        // Restore date and time
+        if (formData.date) {
+            const dateInput = document.getElementById('date');
+            if (dateInput) {
+                dateInput.value = formData.date;
+                dateInput.dispatchEvent(new Event('change'));
+            }
+        }
+        
+        if (formData.time) {
+            const timeSelect = document.getElementById('time');
+            if (timeSelect) {
+                // Wait for time slots to load
+                const checkTime = setInterval(() => {
+                    if (timeSelect.options.length > 1) {
+                        clearInterval(checkTime);
+                        timeSelect.value = formData.time;
+                        timeSelect.dispatchEvent(new Event('change'));
+                    }
+                }, 100);
+            }
+        }
+        
+        // Restore additional services
+        if (formData.additionalServices) {
+            try {
+                const additionalServices = JSON.parse(decodeURIComponent(formData.additionalServices));
+                additionalServices.forEach(serviceId => {
+                    const checkbox = document.querySelector(`input[type="checkbox"][value="${serviceId}"]`);
+                    if (checkbox) {
+                        checkbox.checked = true;
+                        checkbox.dispatchEvent(new Event('change'));
+                    }
+                });
+            } catch (e) {
+                console.error('Error restoring additional services:', e);
+            }
+        }
+        
+        // Clear the saved data
+        sessionStorage.removeItem('bookingFormData');
+        sessionStorage.removeItem('returningFromPayment');
+        
+        return true;
+    } catch (e) {
+        console.error('Error restoring form data:', e);
+        return false;
+    }
+}
+
 // Wait for DOM to load
 document.addEventListener('DOMContentLoaded', () => {
     // Check if user is logged in
@@ -151,6 +363,15 @@ document.addEventListener('DOMContentLoaded', () => {
             loadUserPets(user.uid);
             loadServices();
             setupForm(user.uid);
+            
+            // Try to restore form data if returning from payment
+            const checkFormReady = setInterval(() => {
+                const form = document.getElementById('bookingForm');
+                if (form) {
+                    clearInterval(checkFormReady);
+                    restoreFormData();
+                }
+            }, 100);
         } else {
             // No user is signed in, redirect to login
             window.location.href = 'login.html';
@@ -208,65 +429,164 @@ function loadUserPets(userId) {
 
 // Load services tree from DB once
 async function loadServices() {
+    const loadingElement = document.querySelector('.loading-services');
     try {
-        const snap = await get(ref(db, 'services'));
-        if (snap.exists()) {
-            SERVICES = snap.val();
+        console.log('Loading services from Firebase...');
+        const [servicesSnap, addonsSnap] = await Promise.all([
+            get(ref(db, 'services')),
+            get(ref(db, 'additionalServices'))
+        ]);
+        
+        SERVICES = servicesSnap.exists() ? servicesSnap.val() : {};
+        console.log('Main services loaded:', Object.keys(SERVICES).length > 0 ? 'Yes' : 'No');
+        
+        // Load additional services if they exist
+        if (addonsSnap.exists()) {
+            const additionalServices = addonsSnap.val();
+            console.log('Additional services found:', additionalServices);
+            
+            // Ensure the services object is not empty
+            if (additionalServices && Object.keys(additionalServices).length > 0) {
+                renderAdditionalServices(additionalServices);
+            } else {
+                console.warn('Additional services exist but are empty');
+                if (loadingElement) {
+                    loadingElement.textContent = 'No additional services available';
+                }
+            }
         } else {
-            SERVICES = {};
+            console.warn('No additional services found in database');
+            if (loadingElement) {
+                loadingElement.textContent = 'No additional services available';
+            }
         }
     } catch (e) {
         console.error('Failed to load services:', e);
         SERVICES = {};
+        if (loadingElement) {
+            loadingElement.textContent = 'Failed to load additional services. Please try again later.';
+        }
     }
 }
 
-// Build service type options based on petType
-function populateServiceTypes(petType) {
+// Render additional services
+function renderAdditionalServices(services) {
+    const selectList = document.getElementById('additionalServicesList');
+    if (!selectList) return;
+  
+    selectList.innerHTML = '';
+    const servicesArray = Object.entries(services || {});
+    if (servicesArray.length === 0) {
+      selectList.innerHTML = '<div>No additional services available</div>';
+      return;
+    }
+  
+    servicesArray.forEach(([id, svc]) => {
+      const div = document.createElement('div');
+      div.className = 'service-checkbox-item';
+      const checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.className = 'service-checkbox';
+      checkbox.dataset.id = id;
+      checkbox.dataset.name = svc.name;
+      checkbox.dataset.price = svc.price || 0;
+      
+      const label = document.createElement('label');
+      label.className = 'checkbox-container';
+      
+      const checkmark = document.createElement('span');
+      checkmark.className = 'checkmark';
+      
+      const textSpan = document.createElement('span');
+      textSpan.textContent = `${svc.name} - RM ${svc.price.toFixed(2)}`;
+      
+      label.appendChild(checkbox);
+      label.appendChild(checkmark);
+      label.appendChild(textSpan);
+      
+      div.appendChild(label);
+      selectList.appendChild(div);
+      
+      // Add change event to each checkbox
+      checkbox.addEventListener('change', updateSelectedServices);
+    });
+  }
+  
+  // Get selected add-ons
+  function getSelectedAdditionalServices() {
+    const boxes = document.querySelectorAll('.service-checkbox:checked');
+    return Array.from(boxes).map((box) => ({
+      id: box.dataset.id,
+      name: box.dataset.name,
+      price: parseFloat(box.dataset.price) || 0,
+    }));
+  }
+  
+  // Update selected add-ons UI
+  // Calculate and update the total price
+  function updateTotalPrice() {
+    const totalElement = document.getElementById('grandTotal');
+    if (!totalElement) return;
+    
+    const basePrice = currentMainServicePrice || 0;
+    const additionalServicesTotal = getSelectedAdditionalServices()
+      .reduce((sum, service) => sum + (service.price || 0), 0);
+    
+    const total = basePrice + additionalServicesTotal;
+    totalElement.textContent = `RM ${total.toFixed(2)}`;
+  }
+
+  // Update selected add-ons UI
+  function updateSelectedServices() {
+    const selectedServices = getSelectedAdditionalServices();
+    console.log('Selected services:', selectedServices);
+    updateBookingSummary();
+    updateTotalPrice();
+  }
+  
+  // Populate service types
+  function populateServiceTypes(petType) {
     const typeSelect = document.getElementById('serviceType');
-    const packageSelect = document.getElementById('package');
-    const timeSelect = document.getElementById('time');
-    const details = document.getElementById('serviceDetails');
     if (!typeSelect) return;
+    
     typeSelect.innerHTML = '<option value="">Select a type</option>';
     typeSelect.disabled = true;
-    if (packageSelect) { packageSelect.innerHTML = '<option value="">Select a package</option>'; packageSelect.disabled = true; }
+    
     if (!SERVICES || !petType) return;
-
-    // Collect categories that have entries for this pet type
-    Object.entries(SERVICES).forEach(([category, byType]) => {
-        const list = byType?.[petType];
-        if (!list) return;
-        const opt = document.createElement('option');
-        opt.value = category;
-        opt.textContent = category.charAt(0).toUpperCase() + category.slice(1);
-        typeSelect.appendChild(opt);
+    
+    Object.keys(SERVICES).forEach((category) => {
+        const list = SERVICES[category]?.[petType];
+        if (list) {
+            const opt = document.createElement('option');
+            opt.value = category;
+            opt.textContent = category.charAt(0).toUpperCase() + category.slice(1);
+            typeSelect.appendChild(opt);
+        }
     });
+    
     typeSelect.disabled = false;
 }
 
-// Build packages for selected category and petType
+// Populate packages based on category and pet type
 function populatePackages(category, petType) {
     const packageSelect = document.getElementById('package');
     const details = document.getElementById('serviceDetails');
     if (!packageSelect) return;
+    
     packageSelect.innerHTML = '<option value="">Select a package</option>';
     packageSelect.disabled = true;
-    if (!SERVICES || !petType || !category) return;
-
+    
     const list = SERVICES?.[category]?.[petType];
     if (!list) return;
 
-    Object.keys(list).sort((a,b)=>Number(a)-Number(b)).forEach((key) => {
+    Object.keys(list).sort((a, b) => Number(a) - Number(b)).forEach((key) => {
         const item = list[key];
         if (!item) return;
         const name = item.name || item.title || String(item);
-        // Base price for option label (no unit). Use generic keys.
         let basePriceRaw = (item.price ?? item.Price ?? item.amount ?? 0);
         const price = typeof basePriceRaw === 'number' ? basePriceRaw : Number(String(basePriceRaw).replace(/[^0-9.]/g, ''));
         const opt = document.createElement('option');
         opt.value = `${category}:${key}`;
-        // Include boardingPackage in label for boarding so users see duration
         const boardingPkg = item.boardingPackage || '';
         const labelExtra = (category === 'boarding' && boardingPkg) ? ` (${boardingPkg})` : '';
         opt.textContent = price ? `${name}${labelExtra} - ${CURRENCY} ${price}` : `${name}${labelExtra}`;
@@ -275,7 +595,6 @@ function populatePackages(category, petType) {
         opt.dataset.price = String(price);
         opt.dataset.name = name;
         if (boardingPkg) opt.dataset.boardingPackage = boardingPkg;
-        // Include additional pricing fields for details panel
         if (item.pricePerNight != null) opt.dataset.pricePerNight = String(item.pricePerNight);
         if (item.pricePerDay != null) opt.dataset.pricePerDay = String(item.pricePerDay);
         if (item.duration != null) opt.dataset.duration = String(item.duration);
@@ -283,8 +602,141 @@ function populatePackages(category, petType) {
     });
 
     packageSelect.disabled = false;
-    if (details) { details.style.display = 'none'; details.textContent = ''; }
+    if (details) { 
+        details.style.display = 'none'; 
+        details.textContent = ''; 
+    }
 }
+  
+// Update booking summary
+  function updateBookingSummary() {
+    console.log('=== updateBookingSummary called ===');
+    
+    const mainServiceSummary = document.getElementById('mainServiceSummary');
+    const mainServiceDetails = document.getElementById('mainServiceDetails');
+    const additionalServicesSummary = document.getElementById('additionalServicesSummary');
+    const selectedList = document.getElementById('summarySelectedServicesList');
+    const grandTotalElement = document.getElementById('grandTotal');
+  
+    // Debug: Log if elements are found
+    console.log('mainServiceSummary:', mainServiceSummary ? 'found' : 'not found');
+    console.log('mainServiceDetails:', mainServiceDetails ? 'found' : 'not found');
+    console.log('additionalServicesSummary:', additionalServicesSummary ? 'found' : 'not found');
+    console.log('selectedList:', selectedList ? 'found' : 'not found');
+    console.log('grandTotalElement:', grandTotalElement ? 'found' : 'not found');
+  
+    // Main service
+    if (currentMainService) {
+        console.log('Current main service:', currentMainService);
+        mainServiceSummary.style.display = 'block';
+        
+        // Check if this is a grooming service with size-based pricing
+        const sizeSelect = document.getElementById('size');
+        let displayPrice = currentMainService.price;
+        let sizeInfo = '';
+        
+        if (sizeSelect && sizeSelect.value && currentMainService.type.toLowerCase() === 'grooming') {
+            const selectedOption = sizeSelect.options[sizeSelect.selectedIndex];
+            if (selectedOption && selectedOption.dataset.price) {
+                displayPrice = parseFloat(selectedOption.dataset.price);
+                sizeInfo = ` (${selectedOption.value.charAt(0).toUpperCase() + selectedOption.value.slice(1)})`;
+            }
+        }
+        
+        mainServiceDetails.innerHTML = `
+            <div class="service-item">
+                <span>${currentMainService.type}: ${currentMainService.name}${sizeInfo}</span>
+                <span>RM ${displayPrice.toFixed(2)}</span>
+            </div>`;
+    } else {
+        console.log('No currentMainService set');
+        mainServiceSummary.style.display = 'none';
+    }
+  
+    // Additional services
+    try {
+        const selected = getSelectedAdditionalServices();
+        console.log('Selected services in updateBookingSummary:', selected);
+        
+        if (selected && selected.length > 0) {
+            console.log('Displaying additional services in summary');
+            
+            // Make sure additionalServicesSummary is visible
+            if (additionalServicesSummary) {
+                additionalServicesSummary.style.display = 'block';
+            } else {
+                console.error('additionalServicesSummary element not found');
+            }
+            
+            // Update the selected services list
+            if (selectedList) {
+                selectedList.innerHTML = selected
+                    .map(service => `
+                        <div class="service-item">
+                            <span>${service.name}</span>
+                            <span>RM ${(service.price || 0).toFixed(2)}</span>
+                        </div>`
+                    )
+                    .join('');
+                console.log('Updated selected services list with', selected.length, 'items');
+            } else {
+                console.error('selectedList element not found');
+            }
+        } else {
+            console.log('No additional services selected');
+            if (additionalServicesSummary) {
+                additionalServicesSummary.style.display = 'none';
+            }
+            if (selectedList) {
+                selectedList.innerHTML = '';
+            }
+        }
+    } catch (error) {
+        console.error('Error updating additional services summary:', error);
+    }
+  
+    // Calculate total
+    try {
+        const selectedServices = getSelectedAdditionalServices();
+        
+        // Get base price, considering size-based pricing for grooming
+        let basePrice = currentMainServicePrice || 0;
+        const sizeSelect = document.getElementById('size');
+        
+        // If this is a grooming service and a size is selected, use the size-based price
+        if (currentMainService?.type?.toLowerCase() === 'grooming' && 
+            sizeSelect && sizeSelect.value) {
+            const selectedOption = sizeSelect.options[sizeSelect.selectedIndex];
+            if (selectedOption?.dataset.price) {
+                basePrice = parseFloat(selectedOption.dataset.price);
+            }
+        }
+        
+        const additionalServicesTotal = Array.isArray(selectedServices) ? 
+            selectedServices.reduce((sum, s) => sum + (parseFloat(s.price) || 0), 0) : 0;
+        const total = basePrice + additionalServicesTotal;
+        
+        if (grandTotalElement) {
+            grandTotalElement.textContent = `RM ${total.toFixed(2)}`;
+            
+            // Update hidden total input if it exists
+            const totalAmountInput = document.getElementById('totalAmount');
+            if (totalAmountInput) {
+                totalAmountInput.value = total.toFixed(2);
+            }
+        } else {
+            console.error('grandTotalElement not found');
+        }
+    } catch (error) {
+        console.error('Error calculating total:', error);
+        if (grandTotalElement) {
+            grandTotalElement.textContent = 'RM 0.00';
+        }
+    }
+}
+
+let currentMainService = null;
+let currentMainServicePrice = 0;
 
 // Setup form submission
 function setupForm(userId) {
@@ -296,6 +748,69 @@ function setupForm(userId) {
     const packageSelect = document.getElementById('package');
     const timeSelect = document.getElementById('time');
     const details = document.getElementById('serviceDetails');
+
+    // Calculate total price including additional services
+    function calculateTotalPrice(basePrice = 0) {
+        const additionalServicesTotal = getSelectedAdditionalServices()
+            .reduce((sum, service) => sum + (service.price || 0), 0);
+        return basePrice + additionalServicesTotal;
+    }
+
+    // Update price display when additional services are selected or package changes
+    function updateTotalPrice() {
+        const basePrice = currentMainServicePrice || 0;
+        const total = calculateTotalPrice(basePrice);
+        
+        // Update the service details with the new total
+        if (details && !isNaN(total)) {
+            const baseText = details.textContent.replace(/\s*Total with add-ons:.*$/, '').trim();
+            details.innerHTML = `${baseText}<br><strong>Total with add-ons: RM ${total.toFixed(2)}</strong>`;
+        }
+    }
+
+    // Set up event listeners for additional services
+    const additionalServicesEl = document.getElementById('additionalServices');
+    if (additionalServicesEl) {
+        additionalServicesEl.addEventListener('change', updateTotalPrice);
+    }
+    
+    // Also update total when package changes
+    if (packageSelect) {
+        packageSelect.addEventListener('change', function() {
+            // Update the current main service
+            const serviceTypeSelect = document.getElementById('serviceType');
+            if (serviceTypeSelect && serviceTypeSelect.value && this.value) {
+                const selectedOption = this.options[this.selectedIndex];
+                
+                // Check if we have a size selected for grooming
+                let price = parseFloat(selectedOption.dataset.price) || 0;
+                const sizeSelect = document.getElementById('size');
+                
+                // If this is grooming and a size is selected, use the size price
+                if (serviceTypeSelect.value.toLowerCase() === 'grooming' && 
+                    sizeSelect && sizeSelect.value) {
+                    const sizeOption = sizeSelect.options[sizeSelect.selectedIndex];
+                    if (sizeOption?.dataset?.price) {
+                        price = parseFloat(sizeOption.dataset.price);
+                    }
+                }
+                
+                currentMainService = {
+                    type: serviceTypeSelect.options[serviceTypeSelect.selectedIndex].text,
+                    name: selectedOption.text.split(' - ')[0],
+                    price: price
+                };
+                currentMainServicePrice = price;
+            } else {
+                currentMainService = null;
+                currentMainServicePrice = 0;
+            }
+            
+            // Update both the booking summary and total price
+            updateBookingSummary();
+            updateTotalPrice();
+        });
+    }
 
     // When pet changes, detect type and filter services
     if (petSelect) {
@@ -334,7 +849,7 @@ function setupForm(userId) {
 
     // When package changes, show details and enable time
     if (packageSelect) {
-        packageSelect.addEventListener('change', () => {
+        packageSelect.addEventListener('change', async () => {
             const sel = packageSelect.options[packageSelect.selectedIndex];
             if (!sel || !sel.value) {
                 if (details) { details.style.display = 'none'; details.textContent = ''; }
@@ -434,7 +949,7 @@ function setupForm(userId) {
                     const category = document.getElementById('serviceType').value;
                     const name = sel.dataset.name || '';
                     const duration = sel.dataset.duration || '';
-                    updateTimeOptionsForSelection(category, name, Number(duration) || 60);
+                    await updateTimeOptionsForSelection(category, name, Number(duration) || 60);
                 }
                 // Disable until all required selections are ready
                 timeSelect.disabled = !(dateHasValue && sizeOk);
@@ -445,16 +960,28 @@ function setupForm(userId) {
     // When size changes, update details price
     const sizeSelect = document.getElementById('size');
     if (sizeSelect) {
-        sizeSelect.addEventListener('change', () => {
+        sizeSelect.addEventListener('change', async () => {
             const selPkg = packageSelect?.options[packageSelect.selectedIndex];
             if (!selPkg || !selPkg.value) return;
+            
+            // Get the selected size price or fall back to base price
             const basePrice = Number(selPkg.dataset.price || 0);
             const sizePrice = Number(sizeSelect.options[sizeSelect.selectedIndex]?.dataset?.price || 0);
             const finalPrice = sizePrice || basePrice;
+            
+            // Update the current main service price
+            currentMainServicePrice = finalPrice;
+            
+            // Update the currentMainService object if it exists
+            if (currentMainService) {
+                currentMainService.price = finalPrice;
+            }
+            
             const name = selPkg.dataset.name || '';
             const duration = selPkg.dataset.duration || '';
             const ppn = selPkg.dataset.pricePerNight || '';
             const ppd = selPkg.dataset.pricePerDay || '';
+            
             if (details) {
                 details.innerHTML = `
                     <strong>${name}</strong><br/>
@@ -465,10 +992,13 @@ function setupForm(userId) {
                 `;
                 details.style.display = 'block';
             }
+            
+            // Update the booking summary with the new price
+            updateBookingSummary();
             if (timeSelect) {
                 const [cat] = (selPkg.value || '').split(':');
                 const dateHasValue = !!document.getElementById('date')?.value;
-                if (dateHasValue) updateTimeOptionsForSelection(cat, name, Number(duration) || 60);
+                if (dateHasValue) await updateTimeOptionsForSelection(cat, name, Number(duration) || 60);
                 timeSelect.disabled = !(sizeSelect.value && dateHasValue);
             }
         });
@@ -477,13 +1007,13 @@ function setupForm(userId) {
     // When date changes, populate time options if package already chosen
     const dateEl = document.getElementById('date');
     if (dateEl) {
-        dateEl.addEventListener('change', () => {
+        dateEl.addEventListener('change', async () => {
             const sel = packageSelect?.options[packageSelect.selectedIndex];
             if (!sel || !sel.value) return;
             const [category] = (sel.value || '').split(':');
             const name = sel.dataset.name || '';
             const duration = sel.dataset.duration || '';
-            updateTimeOptionsForSelection(category, name, Number(duration) || 60);
+            await updateTimeOptionsForSelection(category, name, Number(duration) || 60);
             // Recompute boarding end date when start date changes
             if (category === 'boarding') {
                 const pkg = sel.dataset.boardingPackage || '';
@@ -521,10 +1051,14 @@ function setupForm(userId) {
         // Get form values
         const petId = document.getElementById('pet').value;
         const category = document.getElementById('serviceType').value;
-        const selectedPackage = document.getElementById('package').value;
+        const packageSelect = document.getElementById('package');
+        const selectedPackage = packageSelect.value;
         const date = document.getElementById('date').value;
         const time = document.getElementById('time').value;
         const endDateVal = document.getElementById('endDate')?.value || '';
+        
+        // Get service name for availability check
+        const serviceName = packageSelect.options[packageSelect.selectedIndex]?.dataset?.name || '';
         
         // Validate form
         // If selected package has tiered pricing, size becomes required
@@ -557,6 +1091,27 @@ function setupForm(userId) {
             }
             return;
         }
+        
+        // Check time slot availability for non-boarding services
+        if (category !== 'boarding') {
+            try {
+                const { available, message } = await isTimeSlotAvailable(serviceName, date, time);
+                if (!available) {
+                    if (statusEl) {
+                        statusEl.textContent = message;
+                        statusEl.style.color = '#c62828';
+                    }
+                    return;
+                }
+            } catch (error) {
+                console.error('Error checking time slot availability:', error);
+                if (statusEl) {
+                    statusEl.textContent = 'Error checking time slot availability. Please try again.';
+                    statusEl.style.color = '#c62828';
+                }
+                return;
+            }
+        }
 
         // Disable submit while processing
         const originalLabel = submitBtn ? submitBtn.innerHTML : '';
@@ -582,6 +1137,11 @@ function setupForm(userId) {
                 serviceName = sel?.dataset?.name || '';
             }
             
+            // Get selected additional services
+            const additionalServices = getSelectedAdditionalServices();
+            const additionalServicesTotal = additionalServices.reduce((sum, service) => sum + (service.price || 0), 0);
+            const totalPrice = price + additionalServicesTotal;
+            
             // Format date for display
             const formattedDate = new Date(date).toLocaleDateString('en-US', {
                 year: 'numeric',
@@ -589,15 +1149,41 @@ function setupForm(userId) {
                 day: 'numeric'
             });
             
+            // Get pet size from the size dropdown or pet data
+            let petSize = '';
+            const sizeSelect = document.getElementById('size');
+            if (sizeSelect && sizeSelect.value) {
+                petSize = sizeSelect.options[sizeSelect.selectedIndex].text;
+            } else if (pet.size) {
+                // If no size select, try to get from pet data
+                petSize = pet.size;
+            }
+            
+            // Prepare query parameters
+            const params = new URLSearchParams({
+                pet: pet.name,
+                service: serviceName,
+                type: category,
+                size: petSize, 
+                date: date,
+                endDate: endDateVal || '',
+                stayDays: (category === 'boarding' && endDateVal) ? String(computeStayDays(date, endDateVal)) : '',
+                time: time,
+                amount: totalPrice.toFixed(2),
+                baseAmount: price.toFixed(2),
+                species: pet.type || pet.petType || '',
+                notes: document.getElementById('notes')?.value?.trim() || '',
+                hasAddons: additionalServices.length > 0 ? '1' : '0'
+            });
+            
+            // Add additional services as separate parameters
+            additionalServices.forEach((service, index) => {
+                params.append(`addon_${index}_name`, service.name);
+                params.append(`addon_${index}_price`, service.price.toFixed(2));
+            });
+            
             // Redirect to payment confirmation
-            const sizeParam = encodeURIComponent(document.getElementById('size')?.value || '');
-            const endParam = encodeURIComponent(endDateVal || '');
-            // Include stayDays for boarding
-            const stayDays = (category === 'boarding' && endDateVal) ? computeStayDays(date, endDateVal) : '';
-            const stayParam = encodeURIComponent(String(stayDays || ''));
-            const speciesParam = encodeURIComponent(pet.type || pet.petType || '');
-            const notesVal = encodeURIComponent(document.getElementById('notes')?.value?.trim() || '');
-            window.location.href = `payment-confirm.html?pet=${encodeURIComponent(pet.name)}&service=${encodeURIComponent(serviceName)}&type=${encodeURIComponent(category)}&size=${sizeParam}&date=${date}&endDate=${endParam}&stayDays=${stayParam}&time=${time}&amount=${price}&species=${speciesParam}&notes=${notesVal}`;
+            window.location.href = `payment-confirm.html?${params.toString()}`;
             
         } catch (error) {
             console.error('Error processing booking:', error);

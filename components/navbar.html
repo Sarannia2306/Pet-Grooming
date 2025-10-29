@@ -1,0 +1,143 @@
+<!-- Navigation -->
+<nav class="navbar">
+    <div class="container">
+        <a href="index.html" class="logo">Snuggle<span>Paw</span></a>
+        <div class="nav-links">
+            <a href="index.html">Home</a>
+            <a href="services.html">Services</a>
+            <a href="booking.html">Book Now</a>
+            <a href="about.html">About Us</a>
+            <a href="contact.html">Contact</a>
+            <div class="auth-buttons" id="authButtons">
+                <!-- Dynamic content will be inserted here by JavaScript -->
+            </div>
+            <div class="user-menu" id="userMenu" style="display: none; margin-left: 1rem;">
+                <button class="user-avatar" id="userAvatar" style="width: 40px; height: 40px; border-radius: 50%; background: var(--primary-color); color: white; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: bold;"></button>
+                <div class="dropdown-menu" style="display: none; position: absolute; right: 20px; background: white; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); min-width: 200px; z-index: 1000; margin-top: 10px;">
+                    <a href="dashboard.html" class="dropdown-item" style="display: block; padding: 10px 15px; color: var(--dark-color); text-decoration: none; transition: background-color 0.2s; border-radius: 8px 8px 0 0;" onmouseover="this.style.backgroundColor='#f8f9fa'" onmouseout="this.style.backgroundColor='white'">
+                        <i class="fas fa-user" style="margin-right: 8px;"></i> My Profile
+                    </a>
+                    <a href="#" id="logoutBtn" class="dropdown-item" style="display: block; padding: 10px 15px; color: var(--danger-color); text-decoration: none; transition: background-color 0.2s; border-radius: 0 0 8px 8px;" onmouseover="this.style.backgroundColor='#f8f9fa'" onmouseout="this.style.backgroundColor='white'">
+                        <i class="fas fa-sign-out-alt" style="margin-right: 8px;"></i> Logout
+                    </a>
+                </div>
+            </div>
+        </div>
+        <button class="hamburger">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+    </div>
+</nav>
+
+<script>
+// Check if user is logged in
+function checkAuthState() {
+    const user = JSON.parse(localStorage.getItem('user') || 'null');
+    const authButtons = document.getElementById('authButtons');
+    const userMenu = document.getElementById('userMenu');
+    const userAvatar = document.getElementById('userAvatar');
+    
+    if (user) {
+        // User is logged in
+        authButtons.style.display = 'none';
+        userMenu.style.display = 'flex';
+        userMenu.style.alignItems = 'center';
+        
+        // Set user's initial in avatar
+        const displayName = user.displayName || user.email || 'U';
+        userAvatar.textContent = displayName.charAt(0).toUpperCase();
+    } else {
+        // User is not logged in
+        authButtons.style.display = 'flex';
+        userMenu.style.display = 'none';
+        authButtons.innerHTML = `
+            <a href="login.html" class="btn btn-outline">Login</a>
+            <a href="register.html" class="btn btn-primary" style="margin-left: 10px;">Sign Up</a>
+        `;
+    }
+}
+
+// Toggle mobile menu
+const hamburger = document.querySelector('.hamburger');
+const navLinks = document.querySelector('.nav-links');
+
+if (hamburger && navLinks) {
+    hamburger.addEventListener('click', () => {
+        navLinks.classList.toggle('active');
+        hamburger.classList.toggle('active');
+    });
+}
+
+// Close mobile menu when clicking a link
+document.querySelectorAll('.nav-links a').forEach(link => {
+    link.addEventListener('click', () => {
+        if (navLinks) navLinks.classList.remove('active');
+        if (hamburger) hamburger.classList.remove('active');
+    });
+});
+
+// Add active class to current page link
+document.addEventListener('DOMContentLoaded', () => {
+    checkAuthState();
+    
+    const currentPage = window.location.pathname.split('/').pop() || 'index.html';
+    const links = document.querySelectorAll('.nav-links a:not(.dropdown-item)');
+    links.forEach(link => {
+        if (link.getAttribute('href') === currentPage) {
+            link.classList.add('active');
+        } else {
+            link.classList.remove('active');
+        }
+    });
+    
+    // Toggle user dropdown
+    const userAvatar = document.getElementById('userAvatar');
+    const dropdownMenu = document.querySelector('.dropdown-menu');
+    
+    if (userAvatar && dropdownMenu) {
+        userAvatar.addEventListener('click', (e) => {
+            e.stopPropagation();
+            dropdownMenu.style.display = dropdownMenu.style.display === 'block' ? 'none' : 'block';
+        });
+        
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.user-menu')) {
+                dropdownMenu.style.display = 'none';
+            }
+        });
+        
+        // Handle logout
+        const logoutBtn = document.getElementById('logoutBtn');
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', async (e) => {
+                e.preventDefault();
+                try {
+                    // Sign out from Firebase
+                    await signOut(auth);
+                    // Clear user data from local storage
+                    localStorage.removeItem('user');
+                    // Redirect to home page
+                    window.location.href = 'index.html';
+                } catch (error) {
+                    console.error('Error signing out:', error);
+                }
+            });
+        }
+    }
+});
+
+// Navbar scroll effect
+window.addEventListener('scroll', () => {
+    const navbar = document.querySelector('.navbar');
+    if (navbar) {
+        if (window.scrollY > 50) {
+            navbar.classList.add('scrolled');
+        } else {
+            navbar.classList.remove('scrolled');
+        }
+    }
+});
+</script>

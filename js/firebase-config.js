@@ -34,7 +34,7 @@ import {
     getDownloadURL
 } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-storage.js";
 
-// Your web app's Firebase configuration
+// Firebase configuration
 const firebaseConfig = {
     apiKey: "AIzaSyCzoyofIoA94KX1amlrkEEFixiaxUp5NwA",
     authDomain: "pet-grooming-a465a.firebaseapp.com",
@@ -91,7 +91,7 @@ export const signInAdmin = async (email, password) => {
         }
         const profile = snap.val() || {};
         const role = String(profile?.role || '').toLowerCase();
-        const allowed = ['superadmin','admin','manager / owner','pet groomer','grooming assistant / bather','receptionist','pet care attendant'];
+        const allowed = ['superadmin','admin','manager / owner','pet groomer','grooming assistant / bather','pet care attendant'];
         if (!allowed.includes(role)){
             try { await auth.signOut(); } catch {}
             return { success: false, error: 'Insufficient role' };
