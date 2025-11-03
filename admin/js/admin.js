@@ -295,11 +295,16 @@ async function renderMetrics(){
 
   const totalAppointments = validAppointments.length;
   const activeUsers = users.filter(u => (u.status ?? 'active') === 'active').length;
-  const pendingPayments = dbPayments.filter(p => (p.status ?? 'pending') === 'pending').length;
+  
+  // Count upcoming appointments (confirmed and date is in the future)
+  const upcomingAppointments = validAppointments.filter(appt => {
+    const isConfirmed = (appt.status || '').toLowerCase() === 'confirmed';
+    return isConfirmed && isUpcoming(appt.date);
+  }).length;
 
   setText('metric-appointments', totalAppointments);
   setText('metric-users', activeUsers);
-  setText('metric-pending', pendingPayments);
+  setText('metric-pending', upcomingAppointments);
 
   // Also compute revenue summary for reports table
   try { await renderRevenueTable(dbPayments); } catch(e){ console.warn('Revenue table error', e); }

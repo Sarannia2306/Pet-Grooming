@@ -252,61 +252,107 @@ async function maybeCompleteAppointments(items){
   } catch(e){ console.warn('maybeCompleteAppointments error', e); }
 }
 
+// Pagination state
+let currentPage = 1;
+const itemsPerPage = 4;
+
 function renderAppointments(items) {
   const container = document.getElementById('appointmentsList');
   if (!container) return;
 
-    if (!items || items.length === 0) {
-        container.innerHTML = `
-            <div class="no-activity">
-                <i class="fas fa-calendar-times"></i>
-                <p>No appointments found</p>
-            </div>
-        `;
-        return;
-    }
-
-    container.innerHTML = items.map(a => `
-        <div class="appointment-item">
-            <div class="appointment-info">
-                <h4>${a.serviceName || 'Grooming Service'}</h4>
-                <div class="appointment-meta">
-                    <span><i class="far fa-calendar"></i>${a.date || ''}</span>
-                    <span><i class="far fa-clock"></i>${a.time || ''}</span>
-                    ${a.petName ? `<span><i class=\"fas fa-paw\"></i>${a.petName}</span>` : ''}
-                    ${a.species ? `<span><i class=\"fas fa-dog\"></i>${a.species}</span>` : ''}
-                    ${a.price != null ? `<span><i class=\"fas fa-dollar-sign\"></i>${a.price}</span>` : ''}
-                </div>
-            </div>
-            <div class="appointment-actions">
-              <span class="status-badge ${String(a.status||'confirmed').toLowerCase()==='completed' ? 'status-confirmed' : 'status-' + String(a.status||'confirmed').toLowerCase()}">${(a.status || 'confirmed')}</span>
-              ${String(a.status||'').toLowerCase() === 'pending_cancellation' && a.cancel?.paymentId && a.cancel?.feeAmount
-                ? `<a class=\"btn btn-sm\" style=\"background:#e74c3c;color:#fff;border:none\" href=\"payment.html?pay=${a.cancel.paymentId}\">`
-                    + `<i class=\"fas fa-exclamation-triangle\"></i> Pay Cancellation Fee (RM${Number(a.cancel.feeAmount).toFixed(2)})`
-                  + `</a>`
-                : (String(a.status||'').toLowerCase() !== 'cancelled'
-                    ? `<button class=\"btn btn-sm\" style=\"background:#bdc3c7;color:#fff;border:none\" disabled title=\"Cancellation will be enabled by admin if a fee applies\">`
-                        + `<i class=\"fas fa-ban\"></i> Cancel`
-                      + `</button>`
-                    : '')
-              }
-              ${String(a.status||'').toLowerCase() === 'completed' && !a.reviewId
-                ? `<button class=\"btn btn-sm\" data-rate=\"${a.id}\"><i class=\"fas fa-star\"></i> Rate Service</button>`
-                : ''}
-            </div>
-        </div>
-    `).join('');
-
-  // wire rating
-  container.querySelectorAll('[data-rate]')?.forEach(btn => {
-    btn.addEventListener('click', () => {
-      const id = btn.getAttribute('data-rate');
-      const appt = (items||[]).find(x => String(x.id) === String(id));
-      if (appt) openReviewModal(appt);
-    });
+  // Sort appointments by date (newest first)
+  const sortedItems = [...items].sort((a, b) => {
+    const dateA = new Date(a.date + 'T' + (a.time || '00:00'));
+    const dateB = new Date(b.date + 'T' + (b.time || '00:00'));
+    return dateB - dateA;
   });
 
-  // cancellation is now admin-triggered with fee when applicable.
+  // Calculate pagination
+  const totalPages = Math.ceil(sortedItems.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedItems = sortedItems.slice(startIndex, startIndex + itemsPerPage);
+
+  if (!sortedItems || sortedItems.length === 0) {
+    container.innerHTML = `
+      <div class="no-activity">
+        <i class="fas fa-calendar-times"></i>
+        <p>No appointments found</p>
+      </div>`;
+    return;
+  }
+
+  // Format date to display as "DD MMM YYYY"
+  const formatDate = (dateStr) => {
+    if (!dateStr) return '';
+    const [year, month, day] = dateStr.split('-');
+    const date = new Date(year, month - 1, day);
+    return date.toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' });
+  };
+
+  // Render appointments in a table format
+  container.innerHTML = `
+    <div class="table-responsive">
+      <table class="appointments-table">
+        <thead>
+          <tr>
+            <th>Service</th>
+            <th>Date</th>
+            <th>Time</th>
+            <th>Pet</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${paginatedItems.map(a => `
+            <tr>
+              <td>${a.serviceName || 'Grooming Service'}</td>
+              <td>${formatDate(a.date)}</td>
+              <td>${a.time || ''}</td>
+              <td>${a.petName || ''}</td>
+              <td>
+                <span class="status-badge ${String(a.status||'confirmed').toLowerCase()}">
+                  ${(a.status || 'confirmed').charAt(0).toUpperCase() + (a.status || 'confirmed').slice(1)}
+                </span>
+              </td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>
+    ${totalPages > 1 ? `
+      <div class="pagination">
+        <button class="btn btn-sm ${currentPage === 1 ? 'disabled' : ''}" id="prevPage" ${currentPage === 1 ? 'disabled' : ''}>
+          <i class="fas fa-chevron-left"></i> Previous
+        </button>
+        <span>Page ${currentPage} of ${totalPages}</span>
+        <button class="btn btn-sm ${currentPage === totalPages ? 'disabled' : ''}" id="nextPage" ${currentPage === totalPages ? 'disabled' : ''}>
+          Next <i class="fas fa-chevron-right"></i>
+        </button>
+      </div>
+    ` : ''}
+  `;
+
+  // Wire up pagination buttons
+  const prevBtn = container.querySelector('#prevPage');
+  const nextBtn = container.querySelector('#nextPage');
+  
+  if (prevBtn) {
+    prevBtn.addEventListener('click', () => {
+      if (currentPage > 1) {
+        currentPage--;
+        renderAppointments(items);
+      }
+    });
+  }
+  
+  if (nextBtn) {
+    nextBtn.addEventListener('click', () => {
+      if (currentPage < totalPages) {
+        currentPage++;
+        renderAppointments(items);
+      }
+    });
+  }
 }
 
 // ------- Review Modal & Save -------

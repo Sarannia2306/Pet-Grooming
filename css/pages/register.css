@@ -122,6 +122,62 @@
     text-decoration: none;
 }
 
+/* Terms and Conditions Checkbox Styling */
+.terms-checkbox {
+    display: flex;
+    align-items: center;
+    margin: 1.5rem 0;
+    padding: 12px 15px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    gap: 12px;
+    white-space: nowrap;
+    flex-wrap: nowrap;
+}
+
+.terms-checkbox input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    cursor: pointer;
+    margin: 0;
+}
+
+.terms-checkbox label {
+    margin: 0;
+    font-size: 0.9rem;
+    color: #495057;
+    cursor: pointer;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    flex-wrap: nowrap;
+    gap: 4px;
+}
+
+.terms-checkbox .error-message {
+    position: absolute;
+    margin-top: 2.5rem;
+    color: #dc3545;
+    font-size: 0.8rem;
+}
+
+.terms-link {
+    color: #2ec4b6;
+    text-decoration: none;
+    font-weight: 500;
+    margin: 0;
+    padding: 0 2px;
+    transition: color 0.2s;
+    display: inline;
+    white-space: nowrap;
+}
+
+.terms-link:hover {
+    color: #1a8a80;
+    text-decoration: underline;
+}
+
 .terms {
     font-size: 0.85rem;
     color: #666;
@@ -153,12 +209,15 @@
 .requirement {
     display: flex;
     align-items: center;
-    margin-bottom: 0.3rem;
+    margin-bottom: 0.25rem;
+    color: #6c757d;
 }
 
 .requirement i {
     margin-right: 0.5rem;
-    font-size: 0.7rem;
+    font-size: 0.5rem;
+    color: #dc3545;
+    transition: all 0.3s ease;
 }
 
 .requirement.valid {

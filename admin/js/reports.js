@@ -38,6 +38,20 @@ function formatDate(date) {
   return date.toISOString().split('T')[0];
 }
 
+// Define a consistent color palette for all charts
+const chartColors = [
+  'rgba(46, 196, 182, 0.8)',  // Teal
+  'rgba(52, 152, 219, 0.8)',  // Blue
+  'rgba(155, 89, 182, 0.8)',  // Purple
+  'rgba(241, 196, 15, 0.8)',  // Yellow
+  'rgba(230, 126, 34, 0.8)',  // Orange
+  'rgba(231, 76, 60, 0.8)',   // Red
+  'rgba(26, 188, 156, 0.8)',  // Turquoise
+  'rgba(52, 73, 94, 0.8)',    // Dark Blue
+  'rgba(243, 156, 18, 0.8)',  // Dark Yellow
+  'rgba(192, 57, 43, 0.8)'    // Dark Red
+];
+
 // Initialize charts
 function initCharts() {
   // Revenue by Service Chart
@@ -51,7 +65,9 @@ function initCharts() {
         data: [],
         backgroundColor: [], // Will be populated dynamically
         borderColor: [],     // Will be populated dynamically
-        borderWidth: 1
+        borderWidth: 2,
+        borderRadius: 4,     // Rounded corners for bars
+        borderSkipped: false // Apply border radius to all sides
       }]
     },
     options: {
@@ -97,26 +113,36 @@ function initCharts() {
       labels: [],
       datasets: [{
         data: [],
-        backgroundColor: [
-          '#2ec4b6',
-          '#38b2ac',
-          '#4fd1c5',
-          '#81e6d9',
-          '#b2f5ea'
-        ],
-        borderWidth: 0
+        backgroundColor: chartColors, // Use the same color palette
+        borderColor: '#ffffff',
+        borderWidth: 2,
+        hoverOffset: 10,
+        spacing: 5
       }]
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      cutout: '70%',
+      cutout: '65%',
       plugins: {
         legend: {
           position: 'right',
           labels: {
-            boxWidth: 12,
-            padding: 15
+            boxWidth: 16,
+            padding: 15,
+            usePointStyle: true,
+            pointStyle: 'circle',
+            font: {
+              size: 12,
+              weight: '500'
+            }
+          },
+          onHover: function(event, legendItem, legend) {
+            // Change cursor to pointer on hover
+            event.native.target.style.cursor = 'pointer';
+          },
+          onLeave: function(event, legendItem, legend) {
+            event.native.target.style.cursor = 'default';
           }
         }
       }
@@ -463,20 +489,22 @@ function updateCharts(data) {
   // Update chart data with all services
   revenueChart.data.labels = serviceNames;
   revenueChart.data.datasets[0].data = serviceAmounts;
+  // Color assignment is now handled in the specific service mapping below
   revenueChart.options.scales.y.ticks.callback = function(value) {
     return 'RM ' + value.toLocaleString('en-MY', { minimumFractionDigits: 0 });
   };
   
   // Generate distinct colors for each service
   revenueChart.data.datasets[0].backgroundColor = serviceNames.map(service => {
-    // Use consistent colors for common service types
     const lowerService = service.toLowerCase();
     if (lowerService.includes('full grooming')) return 'rgba(46, 196, 182, 0.7)';
     if (lowerService.includes('basic grooming')) return 'rgba(46, 204, 113, 0.7)';
     if (lowerService.includes('day care')) return 'rgba(52, 152, 219, 0.7)';
     if (lowerService.includes('boarding')) return 'rgba(155, 89, 182, 0.7)';
     if (lowerService.includes('additional')) return 'rgba(241, 196, 15, 0.7)';
-    return stringToColor(service);
+    // Fallback to chart colors if no specific color is defined
+    const index = serviceNames.indexOf(service) % chartColors.length;
+    return chartColors[index];
   });
   
   revenueChart.data.datasets[0].borderColor = serviceNames.map(service => {
@@ -486,8 +514,9 @@ function updateCharts(data) {
     if (lowerService.includes('day care')) return 'rgba(52, 152, 219, 1)';
     if (lowerService.includes('boarding')) return 'rgba(155, 89, 182, 1)';
     if (lowerService.includes('additional')) return 'rgba(241, 196, 15, 1)';
-    const color = stringToColor(service).replace('0.7', '1');
-    return color;
+    // Fallback to chart colors with full opacity for borders
+    const index = serviceNames.indexOf(service) % chartColors.length;
+    return chartColors[index].replace('0.8', '1');
   });
   
   try {
@@ -499,8 +528,15 @@ function updateCharts(data) {
   
   // Update top services chart
   if (data.topServices && data.topServices.length > 0) {
-    topServicesChart.data.labels = data.topServices.map(s => s.name);
-    topServicesChart.data.datasets[0].data = data.topServices.map(s => s.count);
+    const topServices = data.topServices;
+    topServicesChart.data.labels = topServices.map(s => s.name);
+    topServicesChart.data.datasets[0].data = topServices.map(s => s.count);
+    
+    // Use the same colors as the revenue chart for consistency
+    topServicesChart.data.datasets[0].backgroundColor = topServices.map((_, i) => 
+      chartColors[i % chartColors.length]
+    );
+    
     try {
       topServicesChart.update();
       console.log('Top services chart updated successfully');
