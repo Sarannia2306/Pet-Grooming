@@ -117,8 +117,187 @@ const initDashboard = async () => {
     }
 };
 
-// Initialize dashboard when DOM is loaded
-document.addEventListener('DOMContentLoaded', initDashboard);
+// Initialize the dashboard
+document.addEventListener('DOMContentLoaded', () => {
+    initDashboard();
+    initRatingModal();
+});
+
+// Initialize rating modal functionality
+function initRatingModal() {
+    const ratingModal = document.getElementById('ratingModal');
+    const closeRatingModal = document.getElementById('closeRatingModal');
+    const cancelRating = document.getElementById('cancelRating');
+    const ratingForm = document.getElementById('ratingForm');
+    const stars = document.querySelectorAll('.rating-stars i');
+    let currentRating = 0;
+    let currentAppointmentId = null;
+
+    // Handle star hover
+    stars.forEach(star => {
+        star.addEventListener('mouseover', () => {
+            const rating = parseInt(star.getAttribute('data-rating'));
+            highlightStars(rating);
+        });
+
+        star.addEventListener('mouseout', () => {
+            highlightStars(currentRating);
+        });
+
+        star.addEventListener('click', () => {
+            currentRating = parseInt(star.getAttribute('data-rating'));
+            document.getElementById('ratingValue').value = currentRating;
+            highlightStars(currentRating);
+        });
+    });
+
+    // Handle rate button clicks on appointment rows
+    document.addEventListener('click', (e) => {
+        const rateBtn = e.target.closest('.btn-rate');
+        if (rateBtn) {
+            e.preventDefault();
+            currentAppointmentId = rateBtn.getAttribute('data-appointment-id');
+            openRatingModal(currentAppointmentId);
+        }
+    });
+
+    // Open rating modal
+    function openRatingModal(appointmentId) {
+        currentAppointmentId = appointmentId;
+        document.getElementById('ratingAppointmentId').value = appointmentId;
+        resetRatingForm();
+        
+        // Show modal
+        ratingModal.style.display = 'flex';
+        setTimeout(() => {
+            ratingModal.classList.add('show');
+        }, 10);
+        
+        // Prevent body scroll
+        document.body.style.overflow = 'hidden';
+    }
+
+    // Close rating modal
+    function closeRatingModalFunc() {
+        ratingModal.classList.remove('show');
+        setTimeout(() => {
+            ratingModal.style.display = 'none';
+            document.body.style.overflow = '';
+        }, 300);
+    }
+
+    // Reset rating form
+    function resetRatingForm() {
+        currentRating = 0;
+        document.getElementById('ratingValue').value = '';
+        document.getElementById('reviewComments').value = '';
+        highlightStars(0);
+    }
+
+    // Highlight stars based on rating
+    function highlightStars(rating) {
+        stars.forEach(star => {
+            const starRating = parseInt(star.getAttribute('data-rating'));
+            if (starRating <= rating) {
+                star.classList.add('active');
+                star.classList.remove('far');
+                star.classList.add('fas');
+            } else {
+                star.classList.remove('active');
+                star.classList.remove('fas');
+                star.classList.add('far');
+            }
+        });
+    }
+
+    // Close modal when clicking the close button or cancel button
+    if (closeRatingModal) {
+        closeRatingModal.addEventListener('click', closeRatingModalFunc);
+    }
+    
+    if (cancelRating) {
+        cancelRating.addEventListener('click', closeRatingModalFunc);
+    }
+
+    // Close modal when clicking outside the modal content
+    window.addEventListener('click', (e) => {
+        if (e.target === ratingModal) {
+            closeRatingModalFunc();
+        }
+    });
+
+    // Handle form submission
+    if (ratingForm) {
+        ratingForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const rating = parseInt(document.getElementById('ratingValue').value);
+            const comments = document.getElementById('reviewComments').value;
+            const appointmentId = document.getElementById('ratingAppointmentId').value;
+            
+            if (!rating) {
+                showAlert('Please select a rating', 'error');
+                return;
+            }
+            
+            try {
+                // Get current user
+                const user = auth.currentUser;
+                if (!user) {
+                    throw new Error('User not authenticated');
+                }
+                
+                // Get all appointments and find the one we want to update
+                const appointmentsRef = ref(database, 'appointments');
+                const snapshot = await get(appointmentsRef);
+                
+                if (!snapshot.exists()) {
+                    throw new Error('No appointments found');
+                }
+                
+                let appointmentRef = null;
+                let appointmentData = null;
+                
+                // Find the appointment by ID and verify it belongs to the user
+                snapshot.forEach((child) => {
+                    const appt = child.val();
+                    if (child.key === appointmentId && appt.userId === user.uid) {
+                        appointmentRef = ref(database, `appointments/${child.key}`);
+                        appointmentData = appt;
+                    }
+                });
+                
+                if (!appointmentRef) {
+                    throw new Error('Appointment not found or access denied');
+                }
+                
+                // Update only the rating and review fields
+                const updates = {
+                    'rating': rating,
+                    'reviewedAt': new Date().toISOString()
+                };
+                
+                // Only add review if it's not empty
+                if (comments && comments.trim() !== '') {
+                    updates['review'] = comments.trim();
+                }
+                
+                // Perform the update
+                await update(appointmentRef, updates);
+                
+                showAlert('Thank you for your feedback!', 'success');
+                closeRatingModalFunc();
+                
+                // Refresh the appointments list
+                loadUserAppointments(user.uid);
+                
+            } catch (error) {
+                console.error('Error submitting rating:', error);
+                showAlert('Failed to submit rating. Please try again.', 'error');
+            }
+        });
+    }
+}
 
 /**
  * Fetch and display user's pets
@@ -161,7 +340,10 @@ async function loadUserPets(userId) {
  */
 function renderPets(pets) {
     const petsContainer = document.getElementById('petsList');
-    if (!petsContainer) return;
+    if (!petsContainer) {
+        console.error('Pets container not found');
+        return;
+    }
     
     if (pets.length === 0) {
         petsContainer.innerHTML = `
@@ -180,7 +362,7 @@ function renderPets(pets) {
     const petsHTML = `
         <div class="pets-grid">
             ${recentPets.map(pet => `
-                <div class="pet-card">
+                <div class="pet-card" data-pet-id="${pet.id}">
                     <div class="pet-image" style="background-color: ${getRandomColor()}">
                         ${pet.photoURL 
                             ? `<img src="${pet.photoURL}" alt="${pet.name}" onerror="this.onerror=null; this.parentElement.innerHTML='<i class=\'fas fa-${pet.type === 'dog' ? 'dog' : pet.type === 'cat' ? 'cat' : 'paw'}\'></i>';" />`
@@ -202,7 +384,325 @@ function renderPets(pets) {
         ` : ''}
     `;
     
+    // Update the DOM
     petsContainer.innerHTML = petsHTML;
+    
+    // Initialize the edit pet modal after rendering pets
+    initEditPetModal();
+}
+
+// =====================
+// Pet Editing Functionality
+// =====================
+
+let currentPetId = null;
+
+// Initialize the edit pet modal
+function initEditPetModal() {
+    console.log('Initializing edit pet modal...');
+    
+    const modal = document.getElementById('editPetModal');
+    const closeBtn = document.getElementById('closeEditPetModal');
+    const cancelBtn = document.getElementById('cancelEditPet');
+    const form = document.getElementById('editPetForm');
+    const fileInput = document.getElementById('editPetPhoto');
+    
+    console.log('Modal elements:', { modal, closeBtn, cancelBtn, form, fileInput });
+    
+    // Open modal when clicking on a pet card
+    document.addEventListener('click', (e) => {
+        const petCard = e.target.closest('.pet-card');
+        if (petCard && !e.target.closest('.pet-actions')) {
+            const petId = petCard.dataset.petId;
+            if (petId) {
+                openEditPetModal(petId);
+            }
+        }
+    });
+    
+    // Removed edit button click handler as we're using card click now
+    
+    // Handle file input change
+    if (fileInput) {
+        fileInput.addEventListener('change', handleImageUpload);
+    } else {
+        console.error('File input element not found');
+    }
+    
+    // Handle form submission
+    if (form) {
+        form.addEventListener('submit', handlePetFormSubmit);
+    } else {
+        console.error('Edit pet form not found');
+    }
+
+    // Close modal when clicking the close button
+    if (closeBtn) {
+        closeBtn.addEventListener('click', () => closeEditPetModal());
+    }
+
+    // Close modal when clicking the cancel button
+    if (cancelBtn) {
+        cancelBtn.addEventListener('click', () => closeEditPetModal());
+    }
+
+    // Close modal when clicking outside the modal content
+    window.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            closeEditPetModal();
+        }
+    });
+
+    // Handle form submission
+    if (form) {
+        form.addEventListener('submit', handlePetFormSubmit);
+    }
+
+    // Handle image preview
+    const imageInput = document.getElementById('editPetPhoto');
+    if (imageInput) {
+        imageInput.addEventListener('change', handleImageUpload);
+    }
+}
+
+// Open the edit pet modal with pet data
+async function openEditPetModal(petId) {
+    console.log('Opening edit modal for pet ID:', petId);
+    try {
+        currentPetId = petId;
+        const petRef = ref(database, `pets/${petId}`);
+        console.log('Fetching pet data from database...');
+        const snapshot = await get(petRef);
+        
+        if (snapshot.exists()) {
+            const petData = snapshot.val();
+            console.log('Pet data found:', petData);
+            populatePetForm(petData);
+            
+            const modal = document.getElementById('editPetModal');
+            console.log('Modal element:', modal);
+            
+            if (!modal) {
+                throw new Error('Modal element not found');
+            }
+            
+            // Prevent scrolling when modal is open
+            document.body.style.overflow = 'hidden';
+            
+            // Make modal visible
+            modal.style.display = 'flex';
+            // Force reflow to ensure the display property is applied
+            void modal.offsetHeight;
+            
+            // Add show class to trigger the opacity transition
+            modal.classList.add('show');
+            console.log('Modal should be visible now');
+            
+            // Set focus to the first input field
+            const nameInput = document.getElementById('editPetName');
+            if (nameInput) {
+                nameInput.focus();
+            } else {
+                console.warn('Could not find editPetName input');
+            }
+        } else {
+            throw new Error('Pet not found');
+        }
+    } catch (error) {
+        console.error('Error opening edit pet modal:', error);
+        showAlert('Failed to load pet details. Please try again.', 'error');
+    }
+}
+
+// Close the edit pet modal
+function closeEditPetModal() {
+    const modal = document.getElementById('editPetModal');
+    modal.classList.remove('show');
+    document.body.style.overflow = ''; // Re-enable scrolling
+    
+    // Reset the form after animation completes
+    setTimeout(() => {
+        modal.style.display = 'none';
+        resetPetForm();
+    }, 300);
+}
+
+// Populate the pet form with data
+function populatePetForm(petData) {
+    console.log('Populating form with pet data:', petData);
+    
+    // Set form field values
+    const form = document.getElementById('editPetForm');
+    if (!form) {
+        console.error('Edit pet form not found');
+        return;
+    }
+    
+    // Set basic fields
+    form.querySelector('#editPetName').value = petData.name || '';
+    form.querySelector('#editPetType').value = petData.type || '';
+    form.querySelector('#editPetBreed').value = petData.breed || '';
+    form.querySelector('#editPetAge').value = petData.age || '';
+    form.querySelector('#editPetWeight').value = petData.weight || '';
+    form.querySelector('#editPetNotes').value = petData.notes || '';
+    
+    // Set up image preview
+    const imagePreview = form.querySelector('.pet-image-preview');
+    const fileNameDisplay = form.querySelector('.file-name');
+    
+    if (imagePreview) {
+        // Clear previous content
+        imagePreview.innerHTML = '';
+        
+        if (petData.photoURL) {
+            // If we have a photo URL, create an image element
+            const img = document.createElement('img');
+            img.src = petData.photoURL;
+            img.alt = petData.name || 'Pet photo';
+            img.onerror = function() {
+                // If image fails to load, show default icon
+                showDefaultPetIcon(imagePreview, petData.type);
+            };
+            imagePreview.appendChild(img);
+            
+            // Update file name display
+            if (fileNameDisplay) {
+                const urlParts = petData.photoURL.split('/');
+                fileNameDisplay.textContent = urlParts[urlParts.length - 1].split('?')[0];
+            }
+        } else {
+            // Show default icon based on pet type
+            showDefaultPetIcon(imagePreview, petData.type);
+            
+            // Clear file name display
+            if (fileNameDisplay) {
+                fileNameDisplay.textContent = 'No file chosen';
+            }
+        }
+    } else {
+        console.error('Image preview element not found');
+    }
+}
+
+// Helper function to show default pet icon
+function showDefaultPetIcon(container, petType) {
+    if (!container) return;
+    
+    const icon = document.createElement('i');
+    icon.className = `fas fa-${petType === 'dog' ? 'dog' : petType === 'cat' ? 'cat' : 'paw'}`;
+    icon.style.fontSize = '2.5rem';
+    icon.style.color = '#cbd5e0';
+    
+    // Clear container and append icon
+    container.innerHTML = '';
+    container.appendChild(icon);
+}
+
+// Reset the pet form
+function resetPetForm() {
+    const form = document.getElementById('editPetForm');
+    if (!form) return;
+    
+    // Reset form fields
+    form.reset();
+    
+    // Reset image preview
+    const imagePreview = form.querySelector('.pet-image-preview');
+    const fileNameDisplay = form.querySelector('.file-name');
+    
+    if (imagePreview) {
+        imagePreview.innerHTML = '<i class="fas fa-camera"></i>';
+        
+        // Reset any existing image preview
+        const img = imagePreview.querySelector('img');
+        if (img) {
+            img.remove();
+        }
+    }
+    
+    if (fileNameDisplay) {
+        fileNameDisplay.textContent = 'No file chosen';
+    }
+    
+    currentPetId = null;
+}
+
+// Handle image upload preview
+function handleImageUpload(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    // Check file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+        showAlert('Image size should be less than 5MB', 'error');
+        e.target.value = '';
+        return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = (event) => {
+        const imagePreview = document.querySelector('.pet-image-preview');
+        if (imagePreview) {
+            imagePreview.innerHTML = `<img src="${event.target.result}" alt="Pet preview">`;
+        }
+    };
+    reader.readAsDataURL(file);
+}
+
+// Handle pet form submission
+async function handlePetFormSubmit(e) {
+    e.preventDefault();
+    
+    if (!currentPetId) return;
+    
+    const saveButton = document.getElementById('savePetChanges');
+    const originalButtonText = saveButton.innerHTML;
+    saveButton.disabled = true;
+    saveButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+    
+    try {
+        const petData = {
+            name: document.getElementById('editPetName').value.trim(),
+            type: document.getElementById('editPetType').value,
+            breed: document.getElementById('editPetBreed').value.trim(),
+            age: document.getElementById('editPetAge').value ? parseFloat(document.getElementById('editPetAge').value) : null,
+            weight: document.getElementById('editPetWeight').value ? parseFloat(document.getElementById('editPetWeight').value) : null,
+            notes: document.getElementById('editPetNotes').value.trim(),
+            updatedAt: new Date().toISOString()
+        };
+        
+        // Basic validation
+        if (!petData.name) {
+            throw new Error('Pet name is required');
+        }
+        
+        if (!petData.type) {
+            throw new Error('Please select a pet type');
+        }
+        
+        // Handle image upload if a new file is selected
+        const imageInput = document.getElementById('editPetPhoto');
+        if (imageInput.files && imageInput.files[0]) {
+            // In a real app, you would upload the image to Firebase Storage here
+            // For now, we'll just store a reference or use a placeholder
+            petData.photoURL = URL.createObjectURL(imageInput.files[0]);
+        }
+        
+        // Update pet data in the database
+        const petRef = ref(database, `pets/${currentPetId}`);
+        await update(petRef, petData);
+        
+        // Show success message and close the modal
+        showAlert('Pet details updated successfully!', 'success');
+        closeEditPetModal();
+        
+    } catch (error) {
+        console.error('Error updating pet:', error);
+        showAlert(error.message || 'Failed to update pet details. Please try again.', 'error');
+    } finally {
+        saveButton.disabled = false;
+        saveButton.innerHTML = originalButtonText;
+    }
 }
 
 // =====================
@@ -310,9 +810,15 @@ function renderAppointments(items) {
               <td>${a.time || ''}</td>
               <td>${a.petName || ''}</td>
               <td>
-                <span class="status-badge ${String(a.status||'confirmed').toLowerCase()}">
-                  ${(a.status || 'confirmed').charAt(0).toUpperCase() + (a.status || 'confirmed').slice(1)}
-                </span>
+                <div class="status-container">
+                  <span class="status-badge ${String(a.status||'confirmed').toLowerCase()}">
+                    ${(a.status || 'confirmed').charAt(0).toUpperCase() + (a.status || 'confirmed').slice(1)}
+                  </span>
+                  ${a.status === 'completed' && !a.rating ? 
+                    `<button class="btn-rate" data-appointment-id="${a.id}">
+                      <i class="fas fa-star"></i> Rate
+                    </button>` : ''}
+                </div>
               </td>
             </tr>
           `).join('')}
@@ -975,6 +1481,9 @@ function initUI() {
  * Set up event listeners
  */
 function setupEventListeners() {
+    // Initialize the edit pet modal
+    initEditPetModal();
+    
     // Sign out button
     const logoutButton = document.getElementById('logoutBtn');
     

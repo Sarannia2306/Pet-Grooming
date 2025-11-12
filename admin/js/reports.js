@@ -554,7 +554,7 @@ function updateMetrics(metrics) {
   document.getElementById('metric-total-revenue').textContent = `RM ${parseFloat(metrics.totalRevenue).toLocaleString('en-MY', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
-// Update appointments table
+// Update appointments table with pagination
 function updateAppointmentsTable(appointments) {
   const tbody = document.getElementById('appointmentsTableBody');
   if (!tbody) return;
@@ -577,8 +577,13 @@ function updateAppointmentsTable(appointments) {
       )
     : allAppointments;
   
-  // Update the table with filtered or all appointments
-  tbody.innerHTML = filteredAppointments.map(appt => `
+  // Calculate pagination
+  const totalPages = Math.ceil(filteredAppointments.length / appointmentsPerPage);
+  const startIndex = (currentPage - 1) * appointmentsPerPage;
+  const paginatedAppointments = filteredAppointments.slice(startIndex, startIndex + appointmentsPerPage);
+  
+  // Update the table with paginated appointments
+  tbody.innerHTML = paginatedAppointments.map(appt => `
     <tr>
       <td>${appt.id}</td>
       <td>${appt.service}</td>
@@ -590,13 +595,80 @@ function updateAppointmentsTable(appointments) {
     </tr>
   `).join('');
   
+  // Update pagination controls
+  updatePaginationControls(filteredAppointments.length, totalPages);
+  
   // Update table summary
-  document.getElementById('showingCount').textContent = filteredAppointments.length;
-  document.getElementById('totalCount').textContent = allAppointments.length;
+  const startCount = filteredAppointments.length > 0 ? startIndex + 1 : 0;
+  const endCount = Math.min(startIndex + appointmentsPerPage, filteredAppointments.length);
+  
+  document.getElementById('showingCount').textContent = `${startCount}-${endCount}`;
+  document.getElementById('totalCount').textContent = filteredAppointments.length;
 }
 
-// Store the original appointments data for filtering
+// Update pagination controls
+function updatePaginationControls(totalItems, totalPages) {
+  const prevBtn = document.getElementById('prevPage');
+  const nextBtn = document.getElementById('nextPage');
+  const pageInfo = document.getElementById('pageInfo');
+  
+  if (prevBtn) prevBtn.disabled = currentPage <= 1;
+  if (nextBtn) nextBtn.disabled = currentPage >= totalPages || totalPages === 0;
+  if (pageInfo) pageInfo.textContent = totalPages > 0 ? `Page ${currentPage} of ${totalPages}` : 'No pages';
+}
+
+// Store the original appointments data for filtering and pagination
 let allAppointments = [];
+let currentPage = 1;
+const appointmentsPerPage = 5;
+
+// Initialize pagination controls
+function initPaginationControls() {
+  const prevBtn = document.getElementById('prevPage');
+  const nextBtn = document.getElementById('nextPage');
+  const pageInfo = document.getElementById('pageInfo');
+  
+  if (prevBtn) {
+    prevBtn.addEventListener('click', () => {
+      if (currentPage > 1) {
+        currentPage--;
+        updateAppointmentsTable(allAppointments);
+      }
+    });
+  }
+  
+  if (nextBtn) {
+    nextBtn.addEventListener('click', () => {
+      const totalPages = Math.ceil(allAppointments.length / appointmentsPerPage);
+      if (currentPage < totalPages) {
+        currentPage++;
+        updateAppointmentsTable(allAppointments);
+      }
+    });
+  }
+  
+  // Add search input handler
+  const searchInput = document.getElementById('appointmentSearch');
+  if (searchInput) {
+    searchInput.addEventListener('input', (e) => {
+      currentPage = 1; // Reset to first page when searching
+      filterAppointments(e.target.value);
+    });
+  }
+  
+  // Add refresh button handler
+  const refreshBtn = document.querySelector('.table-actions .btn');
+  if (refreshBtn) {
+    refreshBtn.addEventListener('click', () => {
+      currentPage = 1;
+      if (searchInput) searchInput.value = '';
+      updateAppointmentsTable(allAppointments);
+    });
+  }
+}
+
+// Call this when the page loads
+document.addEventListener('DOMContentLoaded', initPaginationControls);
 
 // Filter appointments based on search term
 function filterAppointments(searchTerm = '') {

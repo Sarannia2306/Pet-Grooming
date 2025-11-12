@@ -58,15 +58,45 @@ import { showAlert } from './auth-utils.js';
         console.error('Error container not found');
         return;
       }
-      box.style.display = message ? 'block' : 'none';
-      box.textContent = message || '';
-      // Add some styling to make errors more visible
-      box.style.color = '#dc3545';
-      box.style.padding = '10px';
-      box.style.marginBottom = '15px';
-      box.style.borderRadius = '4px';
-      box.style.backgroundColor = '#f8d7da';
-      box.style.border = '1px solid #f5c6cb';
+      
+      // Clear any existing content and classes
+      box.innerHTML = '';
+      box.className = 'error-message';
+      
+      if (!message) {
+        box.style.display = 'none';
+        return;
+      }
+      
+      // Create error message element with icon
+      const errorContent = document.createElement('div');
+      errorContent.className = 'error-content';
+      errorContent.style.display = 'flex';
+      errorContent.style.alignItems = 'center';
+      errorContent.style.gap = '8px';
+      
+      // Add error icon
+      const icon = document.createElement('i');
+      icon.className = 'fas fa-exclamation-circle';
+      icon.style.fontSize = '16px';
+      
+      // Add error text
+      const text = document.createElement('span');
+      text.textContent = message;
+      
+      // Assemble the error message
+      errorContent.appendChild(icon);
+      errorContent.appendChild(text);
+      box.appendChild(errorContent);
+      
+      // Show the error container
+      box.style.display = 'block';
+      box.style.visibility = 'visible';
+      box.style.opacity = '1';
+      box.style.height = 'auto';
+      
+      // Scroll to the error message
+      box.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
   
     // ---------- Firebase auth call ----------
@@ -95,15 +125,20 @@ import { showAlert } from './auth-utils.js';
           };
         } else {
           console.error('Sign in failed:', result.error);
-          throw new Error(result.error || 'Failed to sign in');
+          // Return the error object as is to preserve error codes
+          return { 
+            ok: false, 
+            code: result.error?.code || 'auth/unknown-error',
+            message: result.error?.message || 'Failed to sign in. Please try again.'
+          };
         }
       } catch (error) {
         console.error('Login error:', error);
         // Return more detailed error information
         return { 
           ok: false, 
-          message: error.message || 'Failed to sign in. Please try again.',
-          code: error.code || 'auth/unknown-error'
+          code: error.code || 'auth/unknown-error',
+          message: error.message || 'Failed to sign in. Please try again.'
         };
       }
     }
@@ -121,7 +156,7 @@ import { showAlert } from './auth-utils.js';
       
       const email = qs('#email', form);
       const password = qs('#password', form);
-      const rememberMe = qs('#remember', form);
+      const rememberMe = qs('#remember', form).checked; // Get the checked state
       const submitBtn = qs('#loginBtn', form);
   
       console.log('Form elements:', { 
@@ -168,29 +203,44 @@ import { showAlert } from './auth-utils.js';
   
       try {
         setButtonLoading(submitBtn, true);
-        console.log('Calling loginUser with rememberMe:', rememberMe.checked);
+        console.log('Calling loginUser with rememberMe:', rememberMe);
         
-        // Pass rememberMe state to loginUser
-        const result = await loginUser(email.value.trim(), password.value, rememberMe.checked);
-        console.log('loginUser result:', result);
+        const result = await loginUser(email.value.trim(), password.value, rememberMe);
         
         if (result.ok) {
-          console.log('Login successful, redirecting to dashboard');
-          showFormErrorTop('');
-          window.location.href = 'dashboard.html';
+          console.log('Login successful, redirecting...');
+          // Redirect to dashboard or intended page
+          const redirectTo = new URLSearchParams(window.location.search).get('redirect') || 'dashboard.html';
+          window.location.href = redirectTo;
+          return; // Exit the function after successful login
         } else {
           console.log('Login failed with error:', result);
-          let errorMessage = result.message || 'Failed to sign in.';
-          if (result.code === 'auth/wrong-password') {
-            errorMessage = 'Incorrect password. Please try again.';
+          let errorMessage = 'Failed to sign in. Please check your email and password and try again.';
+          
+          // Handle different error cases
+          if (result.code === 'auth/wrong-password' || result.code === 'auth/invalid-login-credentials') {
+            errorMessage = 'Incorrect email or password. Please try again.';
+            // Clear the password field on error
+            if (password) password.value = '';
           } else if (result.code === 'auth/user-not-found') {
             errorMessage = 'No account found with this email. Please sign up.';
           } else if (result.code === 'auth/too-many-requests') {
             errorMessage = 'Too many failed attempts. Please try again later or reset your password.';
           } else if (result.code === 'auth/email-not-verified') {
+            errorMessage = result.message || 'Please verify your email before logging in.';
+          } else if (result.code === 'auth/invalid-email') {
+            errorMessage = 'Please enter a valid email address.';
+          } else if (result.error?.message) {
+            errorMessage = result.error.message;
+          } else if (result.message) {
             errorMessage = result.message;
           }
+          
+          console.log('Displaying error message:', errorMessage);
           showFormErrorTop(errorMessage);
+          
+          // Focus the email field for better UX on login errors
+          if (email) email.focus();
         }
       } catch (err) {
         console.error('Error in handleLogin:', err);
@@ -217,9 +267,74 @@ import { showAlert } from './auth-utils.js';
       }
     }
 
+    // ---------- Password Toggle Functionality ----------
+    function setupPasswordToggles() {
+        console.log('Setting up password toggles...');
+        
+        // Get the password input and toggle button
+        const passwordInput = document.getElementById('password');
+        const toggleButton = document.querySelector('.password-toggle');
+        const toggleIcon = toggleButton ? toggleButton.querySelector('i') : null;
+        
+        if (!passwordInput || !toggleButton || !toggleIcon) {
+            console.error('Missing required elements for password toggle');
+            return;
+        }
+        
+        // Add a class to track password visibility
+        let isPasswordVisible = false;
+        
+        // Add click event to the toggle button
+        toggleButton.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('Toggle button clicked');
+            
+            // Toggle the password visibility
+            isPasswordVisible = !isPasswordVisible;
+            
+            if (isPasswordVisible) {
+                // Show password
+                passwordInput.setAttribute('type', 'text');
+                toggleIcon.classList.remove('fa-eye');
+                toggleIcon.classList.add('fa-eye-slash');
+                toggleButton.setAttribute('aria-label', 'Hide password');
+                console.log('Password shown');
+            } else {
+                // Hide password
+                passwordInput.setAttribute('type', 'password');
+                toggleIcon.classList.remove('fa-eye-slash');
+                toggleIcon.classList.add('fa-eye');
+                toggleButton.setAttribute('aria-label', 'Show password');
+                console.log('Password hidden');
+            }
+            
+            // Log the current input type for debugging
+            console.log('Current input type:', passwordInput.type);
+            
+            // Keep focus on the input
+            passwordInput.focus();
+        });
+        
+        // Add focus styles
+        passwordInput.addEventListener('focus', function() {
+            toggleButton.classList.add('focused');
+        });
+        
+        passwordInput.addEventListener('blur', function() {
+            toggleButton.classList.remove('focused');
+        });
+        
+        // Log initial state
+        console.log('Password toggle initialized. Initial type:', passwordInput.type);
+    }
+
     // ---------- Boot ----------
     document.addEventListener('DOMContentLoaded', async () => {
       console.log('DOM fully loaded, initializing login...');
+      
+      // Initialize password toggles
+      setupPasswordToggles();
       
       const form = qs('#loginForm');
       console.log('Login form element:', form);

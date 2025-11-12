@@ -123,8 +123,13 @@ document.addEventListener('DOMContentLoaded', function() {
     // Confirm password match
     [passwordInput, confirmPasswordInput].forEach(input => {
         input?.addEventListener('input', function() {
-            if (passwordInput.value && confirmPasswordInput.value) {
-                if (passwordInput.value !== confirmPasswordInput.value) {
+            if (!passwordInput || !confirmPasswordInput || !passwordMatch) return;
+            
+            const hasPassword = passwordInput.value && confirmPasswordInput.value;
+            const passwordsMatch = passwordInput.value === confirmPasswordInput.value;
+            
+            if (hasPassword) {
+                if (!passwordsMatch) {
                     passwordMatch.textContent = 'Passwords do not match';
                     passwordMatch.style.display = 'block';
                     passwordMatch.style.color = '#e74c3c';

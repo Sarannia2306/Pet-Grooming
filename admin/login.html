@@ -22,8 +22,18 @@
     .btn{ width:100%; padding:12px 16px; background:var(--primary); color:#fff; border:none; border-radius:12px; font-weight:600; cursor:pointer; margin-top:16px; }
     .btn:disabled{ opacity:.6; cursor:not-allowed; }
     .muted{ color:var(--muted); font-size: 12px; margin-top:12px; }
-    .alert{ display:none; margin-top:12px; padding:10px 12px; border-radius:10px; font-size:13px; }
-    .alert.error{ display:block; background:#fde8e8; color:#c0392b; }
+    .alert{ 
+        display: none; 
+        margin-top: 12px; 
+        padding: 10px 12px; 
+        border-radius: 10px; 
+        font-size: 13px; 
+        background: #fde8e8; 
+        color: #c0392b;
+    }
+    .alert:empty, .alert.hidden { 
+        display: none !important; 
+    }
   </style>
 </head>
 <body>

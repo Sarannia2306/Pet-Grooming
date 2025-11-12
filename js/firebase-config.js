@@ -7,6 +7,7 @@ import {
     signInWithPopup,
     GoogleAuthProvider,
     sendEmailVerification,
+    sendPasswordResetEmail,
     onAuthStateChanged,
     setPersistence,
     browserLocalPersistence,
@@ -116,7 +117,9 @@ export {
     createUserWithEmailAndPassword,
     signInWithEmailAndPassword,
     signInWithPopup,
+    GoogleAuthProvider,
     sendEmailVerification,
+    sendPasswordResetEmail,
     onAuthStateChanged,
     setPersistence,
     browserLocalPersistence,
@@ -349,9 +352,23 @@ export const signInWithGoogle = async () => {
     }
 };
 
+// Send password reset email
+export async function sendPasswordReset(email) {
+  try {
+    await sendPasswordResetEmail(auth, email);
+    return { success: true };
+  } catch (error) {
+    console.error('Password reset error:', error);
+    return { 
+      success: false, 
+      error: error.message || 'Failed to send password reset email' 
+    };
+  }
+}
+
 // Email/Password Sign In
 export const signInWithEmail = async (email, password, rememberMe = false) => {
-    console.log('Starting sign in for:', email);
+    console.log('Starting sign in for:', email, 'Remember me:', rememberMe);
     
     try {
         // Set persistence based on remember me
@@ -417,8 +434,8 @@ export const signInWithEmail = async (email, password, rememberMe = false) => {
         // Map Firebase error codes to user-friendly messages
         let errorMessage = 'Failed to sign in. Please try again.';
         
-        if (error.code === 'auth/wrong-password') {
-            errorMessage = 'Incorrect email or password.';
+        if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-login-credentials') {
+            errorMessage = 'Incorrect email or password. Please try again.';
         } else if (error.code === 'auth/user-not-found') {
             errorMessage = 'No account found with this email. Please sign up first.';
         } else if (error.code === 'auth/too-many-requests') {
@@ -429,6 +446,8 @@ export const signInWithEmail = async (email, password, rememberMe = false) => {
             errorMessage = 'The email address is not valid.';
         } else if (error.code === 'auth/network-request-failed') {
             errorMessage = 'Network error. Please check your internet connection.';
+        } else {
+            console.error('Unhandled auth error:', error.code, error.message);
         }
         
         return { 

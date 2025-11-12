@@ -313,6 +313,7 @@ async function renderMetrics(){
 // ---------- Users ----------
 let usersCache = [];
 let petsCache = [];
+let staffCache = []; // Initialize staffCache array
 function getUserNameById(uid, fallback = ''){
   try {
     if (!uid) return fallback;
@@ -542,63 +543,112 @@ function updateAdminDropdown(selectedId = '') {
   }
 }
 
-// Update staff dropdown function (no changes)
+// Update staff dropdown with available staff members
 function updateStaffDropdown(selectedId = '') {
-  if (!staffSelect) return;
+  const staffSelect = document.getElementById('apptStaff');
+  if (!staffSelect) {
+    console.warn('Staff select element not found');
+    return;
+  }
   
-  // Save current selection
-  const currentValue = selectedId || staffSelect.value;
+  // Store current value to prevent UI flicker if it's the same
+  const currentValue = staffSelect.value;
   
-  // Clear and repopulate
+  // Clear existing options
   staffSelect.innerHTML = '<option value="">-- Select Staff --</option>';
   
-  staffCache.forEach(staff => {
-    const option = document.createElement('option');
-    option.value = staff.uid;
-    option.textContent = `${staff.name} (${staff.role})`;
-    option.selected = staff.uid === currentValue;
-    staffSelect.appendChild(option);
-  });
+  // Add staff options from adminCache
+  if (adminCache && adminCache.length > 0) {
+    adminCache.forEach(staff => {
+      // Only include staff with appropriate roles
+      if (staff.role && ['manager / owner', 'pet groomer', 'grooming assistant / bather', 'pet care attendant', 'admin', 'staff']
+        .some(role => staff.role.toLowerCase().includes(role.toLowerCase()))) {
+        
+        const option = document.createElement('option');
+        option.value = staff.id || staff.uid;
+        option.textContent = `${staff.name || 'Staff Member'} (${staff.position || staff.role || 'Staff'})`;
+        
+        // Check if this option should be selected
+        if ((staff.id === selectedId || staff.uid === selectedId) || 
+            (selectedId === '' && staff.id === currentValue)) {
+          option.selected = true;
+        }
+        
+        staffSelect.appendChild(option);
+      }
+    });
+  } else {
+    console.warn('No staff members found in adminCache');
+  }
 }
 
-// ... rest of the code remains the same ...
 function openApptModal(appt, id) {
   const apptId = id || appt?.id || '';
-  apptKeyEl.value = apptId;
-  apptDateEl.value = toInputDate(appt?.date);
-  apptTimeEl.value = toInputTime(appt?.time);
+  const apptKeyEl = document.getElementById('apptKey');
+  const apptDateEl = document.getElementById('apptDate');
+  const apptTimeEl = document.getElementById('apptTime');
+  const staffSelect = document.getElementById('apptStaff');
+  
+  if (apptKeyEl) apptKeyEl.value = apptId;
+  
+  // Set date and time, falling back to current time if not provided
+  const now = new Date();
+  const apptDate = appt?.date ? new Date(appt.date) : now;
+  const apptTime = appt?.time ? new Date(`2000-01-01T${appt.time}`) : now;
+  
+  if (apptDateEl) {
+    apptDateEl.value = apptDate.toISOString().split('T')[0];
+    // Set minimum date to today
+    apptDateEl.min = new Date().toISOString().split('T')[0];
+  }
+  
+  if (apptTimeEl) {
+    // Format time as HH:MM
+    const hours = String(apptTime.getHours()).padStart(2, '0');
+    const minutes = String(apptTime.getMinutes()).padStart(2, '0');
+    apptTimeEl.value = `${hours}:${minutes}`;
+  }
   
   // Set the modal title
   const modalTitle = document.getElementById('apptModalTitle');
   if (modalTitle) {
-    modalTitle.textContent = apptId ? 'Edit Appointment' : 'New Appointment';
+    modalTitle.textContent = apptId ? 'Reschedule Appointment' : 'New Appointment';
   }
   
-  // Set the assigned staff if exists
-  if (appt?.assignedTo) {
-    updateStaffDropdown(appt.assignedTo);
-  } else {
-    updateStaffDropdown('');
-  }
-  
-  // Show/hide staff dropdown based on user role
-  const currentUser = auth.currentUser;
-  if (currentUser) {
-    const userRole = currentUser.role || '';
-    const isManagerOrOwner = ['manager / owner', 'admin', 'superadmin'].includes(userRole.toLowerCase());
-    const staffField = document.getElementById('apptStaff').closest('.form-group');
-    if (staffField) {
-      staffField.style.display = isManagerOrOwner ? 'block' : 'none';
+  // Handle staff selection if the element exists
+  if (staffSelect) {
+    // Set the assigned staff if exists
+    if (appt?.assignedTo) {
+      updateStaffDropdown(appt.assignedTo);
+    } else {
+      updateStaffDropdown('');
+    }
+    
+    // Show/hide staff dropdown based on user role
+    const currentUser = auth.currentUser;
+    if (currentUser) {
+      const userRole = currentUser.role || '';
+      const isManagerOrOwner = ['manager / owner', 'admin', 'superadmin'].some(role => 
+        userRole.toLowerCase().includes(role.toLowerCase())
+      );
+      const staffField = staffSelect.closest('.form-group');
+      if (staffField) {
+        staffField.style.display = isManagerOrOwner ? 'block' : 'none';
+      }
     }
   }
   
-  // Load staff if not already loaded
-  if (staffCache.length === 0) {
-    loadStaff();
-  }
+  // Set focus to the date field
+  setTimeout(() => {
+    if (apptDateEl) apptDateEl.focus();
+  }, 100);
   
-  apptModal?.setAttribute('aria-hidden', 'false');
-  apptModal?.classList.add('open');
+  // Show the modal
+  const apptModal = document.getElementById('apptModal');
+  if (apptModal) {
+    apptModal.setAttribute('aria-hidden', 'false');
+    apptModal.classList.add('open');
+  }
 }
 
 function closeApptModal(){
@@ -610,23 +660,45 @@ apptModalClose?.addEventListener('click', closeApptModal);
 apptCancelBtn?.addEventListener('click', closeApptModal);
 apptModal?.addEventListener('click', (e) => { if (e.target === apptModal) closeApptModal(); });
 
+// Handle appointment form submission
 apptForm?.addEventListener('submit', async (e) => {
   e.preventDefault();
-  const id = apptKeyEl.value;
-  const newDate = apptDateEl.value;
-  const newTime = apptTimeEl.value;
-  const assignedTo = staffSelect.value;
   
+  const id = document.getElementById('apptKey')?.value;
+  const newDate = document.getElementById('apptDate')?.value;
+  const newTime = document.getElementById('apptTime')?.value;
+  const staffSelect = document.getElementById('apptStaff');
+  const assignedTo = staffSelect?.value || '';
+  const submitBtn = document.getElementById('apptSaveBtn');
+  
+  // Validate required fields
   if (!id || !newDate || !newTime) {
     showToast('error', 'Error', 'Please fill in all required fields');
     return;
+  }
+  
+  // Validate date is not in the past
+  const selectedDate = new Date(newDate);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  if (selectedDate < today) {
+    showToast('error', 'Invalid Date', 'Cannot schedule an appointment in the past');
+    return;
+  }
+  
+  // Set button to loading state
+  const originalBtnText = submitBtn?.textContent;
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
   }
   
   try {
     // Check if the new time slot is available
     const hasConflict = await hasAppointmentConflict(id, newDate, newTime);
     if (hasConflict) {
-      showToast('error', 'Time Slot Taken', 'This time slot is already booked. Please choose another time.');
+      showToast('error', 'Time Slot Unavailable', 'This time slot is already booked. Please choose another time.');
       return;
     }
     
@@ -634,29 +706,40 @@ apptForm?.addEventListener('submit', async (e) => {
     const updateData = { 
       date: newDate, 
       time: newTime, 
-      status: 'scheduled',
-      updatedAt: new Date().toISOString()
+      status: 'rescheduled',
+      updatedAt: new Date().toISOString(),
+      lastUpdatedBy: auth.currentUser?.uid || 'admin'
     };
     
-    // Only include assignedTo if a staff is selected
+    // Include staff assignment if selected
     if (assignedTo) {
-      updateData.assignedTo = assignedTo;
-      const assignedStaff = staffCache.find(s => s.uid === assignedTo);
+      const assignedStaff = adminCache.find(admin => admin.id === assignedTo || admin.uid === assignedTo);
       if (assignedStaff) {
+        updateData.assignedTo = assignedTo;
         updateData.assignedToName = assignedStaff.name;
-        updateData.assignedToRole = assignedStaff.role;
+        updateData.assignedToRole = assignedStaff.role || assignedStaff.position || 'Staff';
       }
     }
     
+    // Update the appointment
     await updateAppointment(id, updateData);
+    
+    // Show success message and close modal
+    showToast('success', 'Appointment Rescheduled', 'The appointment has been successfully rescheduled.');
     closeApptModal();
-    showToast('success', 'Updated', 'Appointment updated successfully');
     
     // Refresh the appointments list
-    renderAppointments();
+    await renderAppointments();
+    
   } catch (err) {
-    console.error('Error updating appointment:', err);
-    showToast('error', 'Failed', 'Could not update appointment');
+    console.error('Error rescheduling appointment:', err);
+    showToast('error', 'Failed', err.message || 'Could not reschedule appointment');
+  } finally {
+    // Reset button state
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = originalBtnText || '<i class="fa fa-check"></i> Save';
+    }
   }
 });
 
@@ -954,24 +1037,56 @@ staffModal?.addEventListener('click', (e) => { if (e.target === staffModal) clos
 
 staffForm?.addEventListener('submit', async (e) => {
   e.preventDefault();
-  const existingId = staffIdEl.value;
+  const existingId = staffIdEl?.value || '';
   const profile = {
     name: staffFullNameEl.value.trim(),
     phone: staffPhoneEl.value.trim(),
     email: staffEmailEl.value.trim(),
     position: staffPositionEl?.value || '',
     role: 'admin',
-    status: 'active'
+    status: 'active',
+    updatedAt: new Date().toISOString()
   };
+  
+  const saveBtn = staffForm.querySelector('button[type="submit"]');
+  const originalBtnText = saveBtn?.textContent;
+  
   try {
-    if (!existingId) { showToast('error', 'Not allowed', 'Creating staff is disabled. Ask staff to self-register.'); return; }
+    if (saveBtn) {
+      saveBtn.disabled = true;
+      saveBtn.textContent = 'Saving...';
+    }
+    
+    if (!existingId) { 
+      showToast('error', 'Not allowed', 'Creating staff is disabled. Ask staff to self-register.'); 
+      return; 
+    }
+    
     // Update existing staff profile under admin/{uid}
     await update(ref(database, `admin/${existingId}`), profile);
-    staffCache = staffCache.map(x => String(x.id) === String(existingId) ? { ...x, ...profile } : x);
-    drawStaff(staffCache);
+    
+    // Update the local cache with the new data
+    const adminIndex = adminCache.findIndex(a => String(a.id || a.uid) === String(existingId));
+    if (adminIndex !== -1) {
+      adminCache[adminIndex] = { ...adminCache[adminIndex], ...profile };
+    }
+    
+    // Force refresh the staff list UI
+    await renderStaff();
+    
+    // Close the modal and show success message
     closeStaffModal();
-    showToast('success', 'Saved', 'Staff saved');
-  } catch(e){ console.error(e); showToast('error', 'Failed', e?.message || 'Could not save staff'); }
+    showToast('success', 'Saved', 'Staff details updated successfully');
+    
+  } catch(e) { 
+    console.error('Error saving staff:', e); 
+    showToast('error', 'Failed', e?.message || 'Could not save staff'); 
+  } finally {
+    if (saveBtn) {
+      saveBtn.disabled = false;
+      saveBtn.textContent = originalBtnText;
+    }
+  }
 });
 // ---------- Pets ----------
 async function renderPets() {
@@ -3104,17 +3219,44 @@ let reviewsCache = [];
 // ---------- Reviews ----------
 async function renderReviews(){
   try {
-    const [r1, r2] = await Promise.all([
-      fetchList('reviews'),
-      fetchList('review')
+    // Fetch from both the old reviews path and the new appointments node
+    const [reviewsFromReviews, reviewsFromAppointments] = await Promise.all([
+      fetchList('reviews'), 
+      fetchList('appointments') 
     ]);
-    const list = [...(r1||[]), ...(r2||[])];
-    // Newest first by date if present
-    list.sort((a,b) => new Date(b.date||0) - new Date(a.date||0));
-    reviewsCache = list;
+
+    // Process reviews from the appointments node
+    const processedAppointmentReviews = (reviewsFromAppointments || [])
+      .filter(appt => appt.rating && appt.review) // Only include appointments with reviews
+      .map(appt => ({
+        id: appt.id,
+        userId: appt.userId,
+        userEmail: appt.userEmail,
+        pet: appt.petName,
+        service: appt.serviceName,
+        rating: appt.rating,
+        comment: appt.review,
+        date: appt.reviewedAt || appt.updatedAt,
+        response: appt.adminResponse,
+        type: 'appointment'
+      }));
+
+    // Combine all reviews (old and new)
+    const allReviews = [
+      ...(reviewsFromReviews || []),
+      ...processedAppointmentReviews
+    ];
+
+    // Sort by date (newest first)
+    allReviews.sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
+    
+    reviewsCache = allReviews;
     drawReviews(reviewsCache);
     populateReviewServiceFilter(reviewsCache);
-  } catch (e){ console.warn('Load reviews failed', e); }
+  } catch (e) { 
+    console.error('Failed to load reviews:', e);
+    showToast('error', 'Error', 'Failed to load reviews');
+  }
 }
 
 // Track delete operations to prevent multiple confirmations
@@ -3205,28 +3347,92 @@ function applyReviewFilters(){
 }
 
 
-function drawReviews(list){
+function drawReviews(list) {
   reviewsCache = list || [];
   const tbody = document.getElementById('reviewsTbody');
-  tbody.innerHTML = reviewsCache.map(r => `
-    <tr>
-      <td>${escapeHtml(r.user || r.userEmail || '')}</td>
-      <td>${escapeHtml(r.pet || '')}</td>
-      <td>${escapeHtml(r.service || '')}</td>
-      <td>${escapeHtml(String(r.rating ?? ''))}</td>
-      <td>${escapeHtml(r.comment || '')}</td>
-      <td>${escapeHtml(r.response || '—')}</td>
-      <td>
-        <button class="btn" data-review-respond="${escapeHtml(r.id||'')}"><i class="fa fa-reply"></i> Respond</button>
-      </td>
-    </tr>
-  `).join('');
+  
+  tbody.innerHTML = reviewsCache.map(review => {
+    // Format date for display
+    const reviewDate = review.date ? new Date(review.date) : null;
+    const formattedDate = reviewDate ? reviewDate.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    }) : 'N/A';
 
+    // Create rating stars
+    const stars = '★'.repeat(review.rating) + '☆'.repeat(5 - (review.rating || 0));
+    
+    // Check if this is an appointment review
+    const isAppointmentReview = review.type === 'appointment' || review.appointmentData;
+    
+    // Build appointment details if available
+    let appointmentDetails = '';
+    if (isAppointmentReview && review.appointmentData) {
+      const appt = review.appointmentData;
+      appointmentDetails = `
+        <div class="appointment-details">
+          <small class="text-muted">
+            ${appt.date ? `Date: ${appt.date}` : ''}
+            ${appt.time ? ` • ${appt.time}` : ''}
+            ${appt.status ? ` • ${appt.status.charAt(0).toUpperCase() + appt.status.slice(1)}` : ''}
+            ${appt.invoiceId ? ` • Invoice: ${appt.invoiceId}` : ''}
+          </small>
+        </div>
+      `;
+    }
+
+    return `
+      <tr class="review-row ${isAppointmentReview ? 'appointment-review' : ''}">
+        <td>
+          <div class="reviewer-info">
+            <div class="reviewer-email">${escapeHtml(review.userEmail || 'Anonymous')}</div>
+            <div class="review-date">${formattedDate}</div>
+          </div>
+        </td>
+        <td>${escapeHtml(review.pet || 'N/A')}</td>
+        <td>
+          <div class="service-info">
+            <div class="service-name">${escapeHtml(review.service || 'N/A')}</div>
+            ${appointmentDetails}
+          </div>
+        </td>
+        <td class="rating-cell">
+          <div class="rating-stars" title="${review.rating} out of 5">
+            <span class="stars">${stars}</span>
+            <span class="rating-value">${review.rating}</span>
+          </div>
+        </td>
+        <td class="comment-cell">
+          <div class="comment-text">${escapeHtml(review.comment || 'No comment')}</div>
+        </td>
+        <td class="response-cell">
+          ${review.response 
+            ? `<div class="admin-response">${escapeHtml(review.response)}</div>` 
+            : '<span class="text-muted">No response yet</span>'
+          }
+        </td>
+        <td class="action-cell">
+          <button class="btn btn-sm btn-outline-primary" data-review-respond="${escapeHtml(review.id || '')}">
+            <i class="fa ${review.response ? 'fa-edit' : 'fa-reply'}"></i> 
+            ${review.response ? 'Edit' : 'Respond'}
+          </button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+
+  // Add event listeners for respond buttons
   tbody.querySelectorAll('[data-review-respond]')?.forEach(btn => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
       const id = btn.getAttribute('data-review-respond');
-      const rv = reviewsCache.find(x => String(x.id) === String(id));
-      openReviewModal(rv);
+      const review = reviewsCache.find(x => String(x.id) === String(id));
+      if (review) {
+        openReviewModal(review);
+      }
     });
   });
 }
@@ -3237,13 +3443,67 @@ const reviewModalClose = document.getElementById('reviewModalClose');
 const reviewCancel = document.getElementById('reviewCancel');
 const reviewForm = document.getElementById('reviewForm');
 const reviewIdEl = document.getElementById('reviewId');
-const reviewResponseEl = document.getElementById('reviewResponse');
 
-function openReviewModal(r){
-  reviewIdEl.value = r?.id || '';
-  reviewResponseEl.value = r?.response || '';
-  reviewModal?.setAttribute('aria-hidden', 'false');
-  reviewModal?.classList.add('open');
+function openReviewModal(review) {
+  if (!reviewModal || !reviewIdEl) return;
+  
+  // Set review ID
+  reviewIdEl.value = review.id || '';
+  
+  // Update modal title
+  const modalTitle = document.querySelector('#reviewModal .modal__title');
+  if (modalTitle) {
+    modalTitle.textContent = review.response ? 'Edit Response' : 'Respond to Review';
+  }
+  
+  // Set review details
+  const reviewTextEl = document.getElementById('reviewText');
+  const reviewServiceEl = document.getElementById('reviewService');
+  const reviewRatingEl = document.getElementById('reviewRating');
+  const reviewDateEl = document.getElementById('reviewDate');
+  const reviewPetEl = document.getElementById('reviewPet');
+  const reviewUserEl = document.getElementById('reviewUser');
+  
+  if (reviewTextEl) reviewTextEl.textContent = review.comment || 'No comment provided';
+  if (reviewServiceEl) reviewServiceEl.textContent = review.service || 'N/A';
+  if (reviewRatingEl) {
+    const stars = '★'.repeat(review.rating) + '☆'.repeat(5 - (review.rating || 0));
+    reviewRatingEl.innerHTML = `<span class="stars">${stars}</span> <span class="rating-value">${review.rating}/5</span>`;
+  }
+  
+  // Format date
+  if (reviewDateEl) {
+    const reviewDate = review.date ? new Date(review.date) : null;
+    const formattedDate = reviewDate ? reviewDate.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    }) : 'N/A';
+    reviewDateEl.textContent = formattedDate;
+  }
+  
+  if (reviewPetEl) reviewPetEl.textContent = review.pet || 'N/A';
+  if (reviewUserEl) reviewUserEl.textContent = review.userEmail || 'Anonymous';
+  
+  // Set response textarea
+  const responseTextarea = document.getElementById('reviewResponse');
+  if (responseTextarea) {
+    responseTextarea.value = review.response || '';
+    // Auto-resize textarea
+    responseTextarea.style.height = 'auto';
+    responseTextarea.style.height = (responseTextarea.scrollHeight) + 'px';
+  }
+  
+  // Show the modal
+  reviewModal.setAttribute('aria-hidden', 'false');
+  reviewModal.classList.add('open');
+  
+  // Focus the response textarea
+  setTimeout(() => {
+    if (responseTextarea) responseTextarea.focus();
+  }, 100);
 }
 function closeReviewModal(){
   reviewModal?.setAttribute('aria-hidden', 'true');
@@ -3255,37 +3515,61 @@ reviewModal?.addEventListener('click', (e) => { if (e.target === reviewModal) cl
 
 reviewForm?.addEventListener('submit', async (e) => {
   e.preventDefault();
-  const id = reviewIdEl.value.trim();
-  const response = reviewResponseEl.value.trim();
+  const id = reviewIdEl?.value;
+  const response = document.getElementById('reviewResponse')?.value?.trim() || '';
   if (!id) return;
+  
+  const submitBtn = reviewForm.querySelector('button[type="submit"]');
+  const originalBtnText = submitBtn?.textContent;
+  
   try {
-    // Update the review with the admin response
-    await update(ref(database, `reviews/${id}`), { response, respondedAt: new Date().toISOString() });
-
-    // post the message to the review user's inbox so it appears in user dashboard
-    let rv = reviewsCache.find(r => String(r.id) === String(id));
-    if (!rv) {
-      const snap = await get(ref(database, `reviews/${id}`));
-      if (snap.exists()) rv = { id, ...snap.val() };
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
     }
-    const targetUid = rv?.userId || '';
-    if (targetUid) {
-      const msgKey = push(ref(database, `users/${targetUid}/messages`)).key;
-      const message = {
-        id: msgKey,
-        from: 'Admin',
-        text: response || `Thank you for your review on ${rv?.service || 'our service'}.`,
-        date: new Date().toISOString(),
-        reviewId: id,
-        service: rv?.service || ''
-      };
-      await set(ref(database, `users/${targetUid}/messages/${msgKey}`), message);
+    
+    // Find the review in our cache to determine its type
+    const review = reviewsCache.find(x => String(x.id) === String(id));
+    if (!review) {
+      throw new Error('Review not found');
     }
-
+    
+    const currentUser = auth.currentUser;
+    const updateData = {
+      response,
+      respondedAt: new Date().toISOString(),
+      respondedBy: currentUser?.uid || 'admin',
+      respondedByName: currentUser?.displayName || 'Admin'
+    };
+    
+    // Determine the path based on review type
+    let updatePath;
+    if (review.type === 'appointment' || review.appointmentData) {
+      // This is an appointment review, update the appointment node
+      updatePath = `appointments/${id}`;
+      updateData.adminResponse = response;
+      updateData.adminRespondedAt = updateData.respondedAt;
+      updateData.adminRespondedBy = updateData.respondedBy;
+    } else {
+      // Regular review
+      updatePath = `reviews/${id}`;
+    }
+    
+    // Save to database
+    await update(ref(database, updatePath), updateData);
+    
+    // Update local cache
+    review.response = response;
+    review.respondedAt = updateData.respondedAt;
+    
+    // Re-render the reviews
+    drawReviews(reviewsCache);
+    
+    // Close modal and show success message
     closeReviewModal();
-    showToast('success', 'Response saved', 'Your response has been recorded');
-    await renderReviews();
-  } catch (err){
+    showToast('success', 'Success', 'Response saved successfully');
+    
+  } catch (err) {
     showToast('error', 'Save failed', 'Could not save response');
     console.error(err);
   }
