@@ -57,7 +57,8 @@
 
 .auth-form h1 {
     text-align: center;
-    margin-bottom: 1.2rem;
+    margin-bottom: 0rem;
+    padding-top: 1.7rem;
     color: var(--primary-color);
     font-size: 1.75rem;
     font-weight: 600;
@@ -284,9 +285,22 @@ input[aria-invalid="true"] {
 }
 
 .auth-footer {
+    margin-top: 1.5rem;
+    font-size: 0.9rem;
+    color: #6c757d;
     text-align: center;
-    margin-top: 1.2rem;
-    font-size: 0.95rem;
+}
+
+.auth-footer .admin-link {
+    display: inline-block;
+    margin-top: 0.15rem;
+    font-size: 0.8rem;
+    color: #9a9fa8;
+}
+
+.auth-footer .admin-link:hover {
+    color: #2ec4b6;
+    text-decoration: underline;
 }
 
 .auth-footer a {
