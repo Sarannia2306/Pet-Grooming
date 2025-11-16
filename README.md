@@ -47,11 +47,6 @@ Snuggle-Paw/
 
 ## Getting Started
 
-### Prerequisites
-
-- Node.js (v14 or higher)
-- npm (v6 or higher) or yarn
-
 ### Installation
 
 1. Clone the repository:
