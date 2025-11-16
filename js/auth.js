@@ -1,5 +1,5 @@
 // Function to check authentication status
-function checkAuthStatus() {
+export function checkAuthStatus() {
     const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
     const loggedInUserDiv = document.getElementById('loggedInUser');
     const guestUserDiv = document.getElementById('guestUser');
@@ -25,7 +25,7 @@ function checkAuthStatus() {
 }
 
 // Toggle password visibility
-function togglePasswordVisibility(button) {
+export function togglePasswordVisibility(button) {
     try {
         // Find the input element - it's the previous sibling of the button's parent
         const wrapper = button.closest('.password-input-wrapper');
@@ -53,7 +53,7 @@ function togglePasswordVisibility(button) {
 }
 
 // Set up password toggle buttons
-function setupPasswordToggles() {
+export function setupPasswordToggles() {
     try {
         // Add click event to all password toggle buttons
         document.querySelectorAll('.password-toggle').forEach(button => {
@@ -86,7 +86,7 @@ function setupPasswordToggles() {
 }
 
 // Initialize when DOM is loaded
-function initAuth() {
+export function initAuth() {
     // Only run if we're on a page that needs auth functionality
     if (document.querySelector('.password-toggle')) {
         setupPasswordToggles();

@@ -1390,7 +1390,8 @@ function drawAppointments(list) {
         
         const petName = escapeHtml(a.petName || a.pet?.name || 'N/A');
         const service = escapeHtml(a.serviceName || a.service || a.serviceType || (a.service && a.service.name) || 'N/A');
-        const status = escapeHtml(a.status || 'scheduled');
+        const rawStatus = (a.status || 'scheduled');
+        const status = escapeHtml(rawStatus);
         
         // Get current user's role from the admin data
         const currentUser = auth.currentUser;
@@ -1413,6 +1414,11 @@ function drawAppointments(list) {
             `Admin ID: ${a.assignedTo}`;
         }
         
+        // Determine if appointment is upcoming and cancellable
+        const isUpcomingAppt = isUpcoming(a.date);
+        const statusLower = rawStatus.toLowerCase();
+        const canCancel = isUpcomingAppt && statusLower !== 'completed' && statusLower !== 'cancelled';
+
         // Admin assignment dropdown - only show for superadmins
         let adminAssignmentCell = `
           <td>${assignedStaff}</td>`;
@@ -1446,9 +1452,10 @@ function drawAppointments(list) {
               <button class="btn btn-sm" data-appt-res="${a.id}" title="Edit">
                 <i class="fa fa-edit"></i>
               </button>
+              ${canCancel ? `
               <button class="btn btn-sm btn-danger" data-appt-cancel="${a.id}" title="Cancel">
                 <i class="fa fa-xmark"></i>
-              </button>
+              </button>` : ''}
             </td>
           </tr>`;
       } catch (e) {
@@ -3241,7 +3248,7 @@ async function renderReviews(){
         type: 'appointment'
       }));
 
-    // Combine all reviews (old and new)
+    // Combine all reviews
     const allReviews = [
       ...(reviewsFromReviews || []),
       ...processedAppointmentReviews
@@ -3408,33 +3415,9 @@ function drawReviews(list) {
         <td class="comment-cell">
           <div class="comment-text">${escapeHtml(review.comment || 'No comment')}</div>
         </td>
-        <td class="response-cell">
-          ${review.response 
-            ? `<div class="admin-response">${escapeHtml(review.response)}</div>` 
-            : '<span class="text-muted">No response yet</span>'
-          }
-        </td>
-        <td class="action-cell">
-          <button class="btn btn-sm btn-outline-primary" data-review-respond="${escapeHtml(review.id || '')}">
-            <i class="fa ${review.response ? 'fa-edit' : 'fa-reply'}"></i> 
-            ${review.response ? 'Edit' : 'Respond'}
-          </button>
-        </td>
       </tr>
     `;
   }).join('');
-
-  // Add event listeners for respond buttons
-  tbody.querySelectorAll('[data-review-respond]')?.forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const id = btn.getAttribute('data-review-respond');
-      const review = reviewsCache.find(x => String(x.id) === String(id));
-      if (review) {
-        openReviewModal(review);
-      }
-    });
-  });
 }
 
 // Review Respond Modal
@@ -3513,70 +3496,12 @@ reviewModalClose?.addEventListener('click', closeReviewModal);
 reviewCancel?.addEventListener('click', closeReviewModal);
 reviewModal?.addEventListener('click', (e) => { if (e.target === reviewModal) closeReviewModal(); });
 
-reviewForm?.addEventListener('submit', async (e) => {
+reviewForm?.addEventListener('submit', (e) => {
+  // Admin responses have been disabled; keep form from submitting or writing to DB
   e.preventDefault();
-  const id = reviewIdEl?.value;
-  const response = document.getElementById('reviewResponse')?.value?.trim() || '';
-  if (!id) return;
-  
-  const submitBtn = reviewForm.querySelector('button[type="submit"]');
-  const originalBtnText = submitBtn?.textContent;
-  
-  try {
-    if (submitBtn) {
-      submitBtn.disabled = true;
-      submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
-    }
-    
-    // Find the review in our cache to determine its type
-    const review = reviewsCache.find(x => String(x.id) === String(id));
-    if (!review) {
-      throw new Error('Review not found');
-    }
-    
-    const currentUser = auth.currentUser;
-    const updateData = {
-      response,
-      respondedAt: new Date().toISOString(),
-      respondedBy: currentUser?.uid || 'admin',
-      respondedByName: currentUser?.displayName || 'Admin'
-    };
-    
-    // Determine the path based on review type
-    let updatePath;
-    if (review.type === 'appointment' || review.appointmentData) {
-      // This is an appointment review, update the appointment node
-      updatePath = `appointments/${id}`;
-      updateData.adminResponse = response;
-      updateData.adminRespondedAt = updateData.respondedAt;
-      updateData.adminRespondedBy = updateData.respondedBy;
-    } else {
-      // Regular review
-      updatePath = `reviews/${id}`;
-    }
-    
-    // Save to database
-    await update(ref(database, updatePath), updateData);
-    
-    // Update local cache
-    review.response = response;
-    review.respondedAt = updateData.respondedAt;
-    
-    // Re-render the reviews
-    drawReviews(reviewsCache);
-    
-    // Close modal and show success message
-    closeReviewModal();
-    showToast('success', 'Success', 'Response saved successfully');
-    
-  } catch (err) {
-    showToast('error', 'Save failed', 'Could not save response');
-    console.error(err);
-  }
+  closeReviewModal?.();
 });
 
-// ---------- Content & Settings ----------
-// Content Management
 const contentAnnouncement = document.getElementById('contentAnnouncement');
 const saveAnnouncementBtn = document.getElementById('saveAnnouncement');
 const dirtyAnnouncement = document.getElementById('dirtyAnnouncement');

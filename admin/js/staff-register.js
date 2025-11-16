@@ -247,6 +247,24 @@ function setupRealTimeValidation() {
     });
     
     terms?.addEventListener('change', () => validateTerms(terms));
+
+    // Password visibility toggles for admin register form
+    form.querySelectorAll('.password-input-wrapper').forEach(wrapper => {
+        const input = wrapper.querySelector('input[type="password"], input[type="text"]');
+        const toggleBtn = wrapper.querySelector('.password-toggle');
+        const icon = toggleBtn ? toggleBtn.querySelector('i') : null;
+
+        if (!input || !toggleBtn || !icon) return;
+
+        toggleBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            const isPassword = input.getAttribute('type') === 'password';
+            input.setAttribute('type', isPassword ? 'text' : 'password');
+
+            icon.classList.toggle('fa-eye', !isPassword);
+            icon.classList.toggle('fa-eye-slash', isPassword);
+        });
+    });
 }
 
 // Initialize the form when DOM is loaded

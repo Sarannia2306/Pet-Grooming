@@ -34,6 +34,36 @@
     .alert:empty, .alert.hidden { 
         display: none !important; 
     }
+
+    /* Password toggle styles */
+    .password-input-wrapper {
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+
+    .password-input-wrapper input {
+        padding-right: 40px;
+    }
+
+    .password-toggle {
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        border: none;
+        background: transparent;
+        cursor: pointer;
+        color: #7f8c8d;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .password-toggle i {
+        font-size: 0.95rem;
+    }
   </style>
 </head>
 <body>
@@ -48,7 +78,12 @@
         <input id="email" type="email" placeholder="admin@SnugglePaw.com" required />
 
         <label for="password">Password</label>
-        <input id="password" type="password" placeholder="•••••••" required />
+        <div class="password-input-wrapper">
+          <input id="password" type="password" placeholder="•••••••" required />
+          <button type="button" class="password-toggle" aria-label="Toggle password visibility">
+            <i class="fas fa-eye"></i>
+          </button>
+        </div>
 
         <button id="submitBtn" class="btn" type="submit">
           <i class="fa fa-right-to-bracket"></i> Sign In
@@ -105,6 +140,27 @@
         return String(role||'').toLowerCase() === 'admin' || 
                String(role||'').toLowerCase() === 'superadmin'; 
     }
+
+    // Password visibility toggle for admin login
+    (function setupPasswordToggle() {
+        const wrapper = document.querySelector('.password-input-wrapper');
+        if (!wrapper) return;
+
+        const input = wrapper.querySelector('#password');
+        const toggleBtn = wrapper.querySelector('.password-toggle');
+        const icon = toggleBtn ? toggleBtn.querySelector('i') : null;
+
+        if (!input || !toggleBtn || !icon) return;
+
+        toggleBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            const isPassword = input.getAttribute('type') === 'password';
+            input.setAttribute('type', isPassword ? 'text' : 'password');
+
+            icon.classList.toggle('fa-eye', !isPassword);
+            icon.classList.toggle('fa-eye-slash', isPassword);
+        });
+    })();
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
