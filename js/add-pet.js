@@ -49,18 +49,16 @@ document.addEventListener('DOMContentLoaded', () => {
     setupEventListeners();
 });
 
-// ======================
+
 // Global Variables for Models
-// ======================
 let petTypeModel, breedModel, catBreedModel, sizeModel; // Global models
 let petTypeLabels = null; // ["dog","cat"]
 let breedLabels = null;   // ["Labrador","Beagle",...]
 let catBreedLabels = null;// ["American Shorthair",...]
 let sizeLabels = null;    // ["small","medium","large"]
 
-// ======================
+
 // Load the Models
-// ======================
 async function loadJsonSafe(url) {
     try {
         const res = await fetch(url, { cache: 'no-store' });
@@ -74,15 +72,23 @@ async function loadJsonSafe(url) {
 
 async function loadModels() {
     petTypeModel = await tf.loadLayersModel('/models/pet_type_model/model.json');
-    breedModel = await tf.loadLayersModel('/models/dog_breeds_model/model.json');  // Dog breeds
+    breedModel = await tf.loadLayersModel('/models/dog_breeds_model/model.json');  
     try { catBreedModel = await tf.loadLayersModel('/models/cat_breeds_model/model.json'); } catch (e) { console.warn('Cat breed model not found', e); } // Cat breed model
     sizeModel = await tf.loadLayersModel('/models/pet_size_model/model.json');
-    // Try to load label files placed next to models
+    // load label files placed next to models
     petTypeLabels = await loadJsonSafe('/models/pet_type_model/labels.json');
     breedLabels = await loadJsonSafe('/models/dog_breeds_model/labels.json');
     catBreedLabels = await loadJsonSafe('/models/cat_breeds_model/labels.json');
     sizeLabels = await loadJsonSafe('/models/pet_size_model/labels.json');
     console.log('Models loaded successfully!');
+    try {
+        console.log('petTypeLabels (index → label):', petTypeLabels);
+        console.log('breedLabels sample [0..4]:', Array.isArray(breedLabels) ? breedLabels.slice(0, 5) : breedLabels);
+        console.log('catBreedLabels sample [0..4]:', Array.isArray(catBreedLabels) ? catBreedLabels.slice(0, 5) : catBreedLabels);
+        console.log('sizeLabels (index → label):', sizeLabels);
+    } catch (logErr) {
+        console.warn('Failed to log model labels for debugging:', logErr);
+    }
 }
 
 function preprocessImageToTensor(imageEl, target = 224, norm = 'neg_one_one') {
@@ -90,7 +96,6 @@ function preprocessImageToTensor(imageEl, target = 224, norm = 'neg_one_one') {
         const src = tf.browser.fromPixels(imageEl).toFloat();
         const h = src.shape[0];
         const w = src.shape[1];
-        // Center square crop to reduce aspect distortion (using slice)
         const size = Math.min(h, w);
         const top = Math.floor((h - size) / 2);
         const left = Math.floor((w - size) / 2);
@@ -249,9 +254,7 @@ window.addEventListener('load', async () => {
     try { await loadModels(); } catch (e) { console.error('Model load failed', e); }
 });
 
-// ======================
 // Initialization
-// ======================
 function initForm() {
     if (addPetForm) {
         addPetForm.addEventListener('submit', handleAddPet);
@@ -355,9 +358,8 @@ async function handleAddPet(e) {
     }
 }
 
-// ======================
+
 // Event Listeners
-// ======================
 function setupEventListeners() {
     console.log('Setting up event listeners');
     
@@ -401,9 +403,7 @@ function setupEventListeners() {
     }
 }
 
-// ======================
 // File Handling
-// ======================
 function handleFileSelect(e) {
     const files = e.target.files;
     if (files.length > 0) {
@@ -447,11 +447,9 @@ function displayImagePreview(file) {
     reader.readAsDataURL(file);
 }
 
-// ======================
 // Breed Management
-// ======================
 function updateBreedOptions(petType = null, searchTerm = '') {
-    // Example breeds for dog and cat (replace with your actual breeds)
+    // Example breeds for dog and cat
     const breeds = {
         dog: ['Labrador Retriever', 'German Shepherd', 'Golden Retriever', 'Bulldog', 'Beagle', 'Yorkshire Terrier', 'Shina Inu', 'Pug', 'Chihuahua', 'Dachshund', 'Bulldog', 'Boxer','Husky', 'Rottweiler','Corgi'],
         cat: ['Persian', 'Maine Coon', 'Siamese', 'Ragdoll', 'Bengal', 'Sphynx', 'Mumbai', 'American Shorthair', 'Abyssinian'],

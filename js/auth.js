@@ -57,7 +57,6 @@ export function setupPasswordToggles() {
     try {
         // Add click event to all password toggle buttons
         document.querySelectorAll('.password-toggle').forEach(button => {
-            // Skip if already set up
             if (button.dataset.toggleSetUp === 'true') return;
             
             // Remove any existing event listeners to prevent duplicates
@@ -69,7 +68,6 @@ export function setupPasswordToggles() {
                 togglePasswordVisibility(this);
             });
             
-            // Add keyboard support (Enter/Space)
             newButton.addEventListener('keydown', function(e) {
                 if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault();
@@ -87,12 +85,12 @@ export function setupPasswordToggles() {
 
 // Initialize when DOM is loaded
 export function initAuth() {
-    // Only run if we're on a page that needs auth functionality
+    // Only run if user on a page that needs auth functionality
     if (document.querySelector('.password-toggle')) {
         setupPasswordToggles();
     }
     
-    // Only run if we're on a page with auth status
+    // Only run if user on a page with auth status
     if (document.getElementById('loggedInUser') || document.getElementById('guestUser')) {
         checkAuthStatus();
     }
